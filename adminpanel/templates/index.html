@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block actions %}
+<div class="d-grid gap-2 p-3">
+    <form class="d-flex mb-3">
+        <input class="form-control me-2" type="search" placeholder="Текст" aria-label="Текст" name="text">
+        <button class="btn btn-outline-success" type="submit">Поиск</button>
+    </form>
+    <button type="button" class="btn text-nowrap btn-dark" data-bs-toggle="modal" data-bs-target="#exampleModal">Создать шаблон</button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-between g-3 align-items-start">
+
+    {% for template in templates %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Шаблон {{ template.title }}</h5>
+                    <p class="card-text">{{ template.text }}</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Пол: {{ template.gender_display }}</l1>
+                    <li class="list-group-item">Оплата: {{ template.tariff_display }}</l1>
+                    <li class="list-group-item">
+                        <div class="d-grid gap-2 d-lg-flex">
+                            <a type="button" class="btn text-nowrap btn-outline-dark" href="/admin/mailing/create?template_id={{ template.id }}">Использовать</a>
+                            <button onclick="deleteTemplate(event, {{ template.id }})" type="button" class="btn text-nowrap btn-outline-danger">Удалить</button>
+                        </div>
+                    </l1>
+                </ul>
+            </div>
+        </div>
+    {% endfor %}
+
+</div>
+
+<div class="modal fade" id="exampleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Создание шаблона</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+
+        <div class="modal-body p-5">
+            <form id="templateForm" action="/api/mailing/template">
+                <div class="row mb-3">
+                    <label for="templateTitle" class="form-label">Название</label>
+                    <input type="text" class="form-control" name="title" id="templateTitle">
+                </div>
+                <div class="row mb-3">
+                    <label for="templateText" class="form-label">Текст</label>
+                    <textarea class="form-control col-sm-10" id="templateText" name="text" rows="10"></textarea>
+                </div>
+                <div class="row mb-3">
+                    <label class="form-label" for="templateTariff">Оплата</label>
+                    <select class="form-select" name="tariff_id" id="templateTariff">
+                        <option selected>-</option>
+                        <option value="-1">Есть</option>
+                    </select>
+                </div>
+                <div class="row mb-3">
+                    <label class="form-label" for="templateGender">Пол</label>
+                    <select class="form-select" name="gender" id="templateGender">
+                        <option selected>-</option>
+                        <option value="m">Мужской</option>
+                        <option value="f">Женский</option>
+                    </select>
+                </div>
+
+                <input type="submit" id="submitButton" class="modal-footer btn btn-success" value="Создать">
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('templateForm').addEventListener('submit', submitForm);
+
+function deleteTemplate(event, template_id) {
+    let button = event.target;
+    if (button.innerText === "Удалить") {
+        button.innerText = "Подтвердите удаление";
+    } else {
+        let request = new Request("/api/mailing/template/" + template_id, {
+            method: 'DELETE'
+        });
+        fetch(request).then(
+            (response) => {
+                window.location.reload();
+            },
+            (error) => {
+                button.innerText = "Ошибка";
+            }
+        );
+    }
+}
+
+function submitForm(event) {
+    event.preventDefault();
+    const submitButton = document.getElementById("submitButton");
+
+    let obj = {};
+    let formData = new FormData(event.target);
+    formData.forEach((value, key) => value === "-" ? null : obj[key] = value);
+
+    submitButton.value = "Отправка...";
+
+    let request = new Request(event.target.action, {
+        method: 'POST',
+        body: JSON.stringify(obj),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    fetch(request).then(
+        (response) => {
+            window.location.reload();
+        },
+        (error) => {
+            submitButton.value = "Ошибка";
+        }
+    );
+}
+</script>
+{% endblock %}

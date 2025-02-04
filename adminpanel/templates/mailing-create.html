@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block actions %}
+<div class="d-grid gap-2">
+    <button id="submitButton" type="button" onclick="createMailing()" class="btn text-nowrap btn-primary">Сохранить и запустить</button>
+    <a type="button" class="btn text-nowrap btn-danger" href="index.html">Отмена</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-between g-3 align-items-start">
+    <div class="container-fluid">
+
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Создание рассылки</h4>
+                <div class="card-text">
+                    <label for="templateText" class="form-label">Текст</label>
+                    <textarea class="form-control col-sm-10" id="templateText" rows="10">{{ template.text }}</textarea>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush px-3">
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateGender">Пол</label>
+                        <select class="form-select" id="templateGender">
+                            <option
+                                {% if (template.gender is none) %} selected="selected" {% endif %}
+                                >-</option>
+                            <option value="m"
+                                {% if (template.gender == "m") %} selected="selected" {% endif %}
+                                >Мужской</option>
+                            <option value="f"
+                                {% if (template.gender == "f") %} selected="selected" {% endif %}
+                                >Женский</option>
+                        </select>
+                    </div>
+                </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateTariff">Оплата</label>
+                        <select class="form-select" id="templateTariff">
+                            <option
+                                {% if (template.tariff is none) %} selected="selected" {% endif %}
+                                >-</option>
+                            <option value="-1"
+                                {% if (template.tariff) %} selected="selected" {% endif %}
+                                >Есть</option>
+                        </select>
+                    </div>
+                </l1>
+                <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">0</mark></l1>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+function createMailing() {
+    const submitButton = document.getElementById("submitButton");
+    const tariffInput = document.getElementById("templateTariff");
+    const genderInput = document.getElementById("templateGender");
+    const textInput = document.getElementById("templateText");
+
+    let tariff = tariffInput.value === "-" || tariffInput.value === "{{ template.tariff_id }}" ? null : tariffInput.value;
+    let gender = genderInput.value === "-" || genderInput.value === "{{ template.gender }}" ? null : genderInput.value;
+    let text = textInput.value === "" || textInput.value === "{{ template.text }}" ? null : textInput.value;
+    let templateId = {{ template.id }};
+
+    let data = {tariff: tariff, gender: gender, text: text, template_id: templateId};
+    console.log("sending", data);
+
+    submitButton.value = "Отправка...";
+    let request = new Request("/api/mailing", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    fetch(request).then(
+        (response) => {
+            window.location.href = "/admin/mailing";
+        },
+        (error) => {
+            submitButton.value = "Ошибка";
+        }
+    );
+}
+
+</script>
+{% endblock %}

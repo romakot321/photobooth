@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>PhotoBooth | Рассылка</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <div class="container-fluid border-bottom border-dark">
+            <div class="navbar navbar-expand-sm navbar-light">
+                <div class="container-fluid">
+                    <ul class="navbar-nav">
+                        <l1 class="navbar-item">
+                            <a class="nav-link text-center p-2 {{ "active" if (request.url|string).endswith("/admin/mailing") else ""}}" href="/admin/mailing">Рассылки</a>
+                        </l1>
+                        <l1 class="navbar-item">
+                            <a class="nav-link text-center p-2 {{ "active" if (request.url|string).endswith("/admin") else ""}}" href="/admin">Шаблоны</a>
+                        </l1>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {% block body %}
+        <div class="container-fluid mt-5">
+            <div class="row gy-3 gx-5">
+                <div class="col-md-3 mb-5">
+                    {% block actions %}
+                    {% endblock %}
+                </div>
+
+                <div class="col-md-9 align-content-start px-5">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </body>
+</html>
