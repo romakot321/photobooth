@@ -17,6 +17,7 @@ class MailingRepository[Table: Mailing, int](BaseRepository):
         query = self._get_list_query(page=page, count=count)
         if text:
             query = self._query_like_filter(query, text=text)
+        query = query.order_by(Mailing.created_at.desc())
         return list(await self.session.scalars(query))
 
     async def get(self, model_id: int) -> Mailing:

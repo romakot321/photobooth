@@ -1,7 +1,8 @@
-from db.tables import User
+from db.tables import Generation, User
 from sqlalchemy_service import BaseService as BaseRepository
 from sqlalchemy_service.base_db.base import Base as BaseTable
 from sqlalchemy_service.base_db.base import get_session
+from sqlalchemy import not_
 
 from typing import TypedDict, Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,9 +41,17 @@ class UserRepository[Table: User, int](BaseRepository):
         self.response.status_code = 201
         return await self.get(model.id)
 
-    async def list(self, gender=None, tariff_ids: list[int] = None) -> list[User]:
-        query = self._get_list_query(gender=gender, count=10000000)
-        if tariff_ids:
+    async def list(self, gender=None, tariff_ids: list[int] = None, god_mode: bool = None) -> list[User]:
+        query = self._get_list_query(count=10000000)
+        if gender is not None:
+            query = query.filter_by(gender=gender)
+        if tariff_ids is not None and tariff_ids:
             query = query.filter(User.tariff_id.in_(tariff_ids))
+        if god_mode is not None:
+            if god_mode:
+                query = query.filter(User.generations.any(Generation.is_god_mode == True))
+            else:
+                query = query.filter(not_(User.generations.any(Generation.is_god_mode == True)))
+        print(query)
         return list(await self.session.scalars(query))
 

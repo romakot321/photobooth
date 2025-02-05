@@ -2,7 +2,7 @@ import aiohttp
 
 
 class BotRepository:
-    BOT_API_URL = "http://localhost:8002"
+    BOT_API_URL = "http://bot"
 
     async def trigger_mailing_run(self, mailing_id: int):
         async with aiohttp.ClientSession(base_url=self.BOT_API_URL) as session:

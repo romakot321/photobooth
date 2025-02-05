@@ -22,6 +22,7 @@ class MailingTemplateSchema(BaseModel):
     text: str
     gender: str | None = None
     tariffs: list[TariffSchema] | None = None
+    god_mode: bool | None = None
 
     @computed_field
     @property
@@ -36,6 +37,7 @@ class MailingTemplateCreateSchema(BaseModel):
     text: str
     gender: str | None = None
     tariff_ids: list[int] | None = None
+    god_mode: bool | None = None
 
 
 class MailingTemplateSearchSchema(BaseModel):
@@ -49,4 +51,5 @@ class MailingTemplateUpdateSchema(BaseModel):
     text: str | None = None
     gender: str | None = None
     tariff_ids: list[int] | None = None
+    god_mode: bool | None = None
 

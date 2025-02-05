@@ -29,7 +29,6 @@ class MailingService:
 
     async def get(self, mailing_id: int) -> MailingSchema:
         model = await self.mailing_repository.get(mailing_id)
-        logger.debug(model.__dict__)
         return MailingSchema.model_validate(model)
 
     async def create_and_run(self, schema: MailingCreateSchema) -> MailingSchema:
@@ -41,7 +40,7 @@ class MailingService:
         model = Mailing(**state)
         model.tariffs = tariffs
         model = await self.mailing_repository.create(model)
-        logger.debug(model.__dict__)
+        logger.debug(f"Running mailing {model.id=}")
         await self.bot_repository.trigger_mailing_run(model.id)
         return MailingSchema.model_validate(model)
 

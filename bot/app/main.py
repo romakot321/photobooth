@@ -136,7 +136,7 @@ async def run_polling():
 
     await bot.delete_webhook()
     logger.info("Bot started")
-    await dispatcher.start_polling(bot)
+    await dispatcher.start_infinity_polling(bot)
 
 
 if __name__ == '__main__':

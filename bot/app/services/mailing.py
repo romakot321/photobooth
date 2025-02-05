@@ -43,6 +43,7 @@ class MailingService:
 
         users = await self.user_repository.list(
             tariff_ids=tariff_ids,
+            god_mode=mailing.god_mode or (mailing.god_mode if mailing.template is None else mailing.template.god_mode),
             gender=mailing.gender or (None if mailing.template is None else mailing.template.gender)
         )
         logger.debug(f"Starting mailing({mailing.id=}) for {len(users)} users")

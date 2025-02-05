@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 
 from app.services.mailing import MailingService
 from app.services.mailing_template import MailingTemplateService
@@ -49,7 +50,7 @@ async def create_mailing_page(
         template = await template_service.get(template_id)
     else:
         template = None
-    messages_count = 0
+    messages_count = "Будет сделано позже"
     tariffs = await template_service.list_tariffs()
     return templates.TemplateResponse(
         "mailing-create.html",

@@ -3,6 +3,7 @@ from aiogram.filters.callback_data import CallbackData
 import app
 import copy
 import json
+import asyncio
 
 from app.schemas.action import MailingData
 from app.schemas.mailing import MailingTestData
@@ -56,11 +57,11 @@ class BotController:
         mailing_data = cls._parse_mailing(mailing_id)
         webhook_data = cls._pack_webhook_data(0, mailing_data)
 
-        await app.dispatcher_instance.feed_webhook_update(
+        asyncio.create_task(app.dispatcher_instance.feed_webhook_update(
             app.bot_instance, app.bot_instance.session.json_loads(webhook_data)
-        )
+        ))
 
     @classmethod
     async def test_mailing(cls, **data):
-        await MailingService.test_mailing(MailingTestData.model_validate(data))
+        asyncio.create_task(MailingService.test_mailing(MailingTestData.model_validate(data)))
 

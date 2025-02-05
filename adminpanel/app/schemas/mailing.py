@@ -1,4 +1,5 @@
 from pydantic import BaseModel, computed_field, ConfigDict
+from loguru import logger
 import datetime as dt
 import locale
 
@@ -19,6 +20,7 @@ class MailingSchema(BaseModel):
     messages_count: int | None = None
     messages_sent: int | None = None
     template: MailingTemplateSchema | None = None
+    god_mode: bool | None = None
     created_at: dt.datetime
 
     @computed_field
@@ -34,6 +36,12 @@ class MailingSchema(BaseModel):
 
     @computed_field
     @property
+    def god_mode_display(self) -> str:
+        god_mode = self.god_mode or (self.god_mode if self.template is None else self.template.god_mode)
+        return {True: "Да", False: "Нет", None: "-"}.get(god_mode)
+
+    @computed_field
+    @property
     def created_at_display(self) -> str:
         return self.created_at.strftime("%d %B %Y года в %H:%M")
 
@@ -45,6 +53,7 @@ class MailingCreateSchema(BaseModel):
     gender: str | None = None
     tariff_ids: list[int] | None = None
     template_id: int | None = None
+    god_mode: bool | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -52,6 +61,7 @@ class MailingUpdateSchema(BaseModel):
     gender: str | None = None
     tariff_ids: list[int] | None = None
     template_id: int | None = None
+    god_mode: bool | None = None
 
 
 class MailingSearchSchema(BaseModel):
