@@ -26,7 +26,4 @@ COPY ./ ./
 RUN pip3 install .
 
 ENV PATH="$PATH:/home/python/.local/bin"
-CMD cd db && \
-    alembic -c ./alembic.prod.ini upgrade head && \
-    cd /home/python && \
-    gunicorn api.main:fastapi_app -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 --forwarded-allow-ips="*"
+CMD gunicorn api.main:fastapi_app -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 --forwarded-allow-ips="*"

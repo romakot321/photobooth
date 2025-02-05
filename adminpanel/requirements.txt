@@ -19,7 +19,7 @@ pydantic_core==2.27.2
 python-dotenv==1.0.1
 sniffio==1.3.1
 SQLAlchemy==2.0.37
-sqlalchemy-service==0.2.7
+sqlalchemy-service @ https://github.com/romakot321/sqlalchemy-service/archive/main.zip#sha256=4fcb7c5c74dd51c31df542eb3e9dedf06af19fee2c9300f6125be2ac2a8faaec
 aiohttp==3.11.11
 starlette==0.45.3
 typing_extensions==4.12.2

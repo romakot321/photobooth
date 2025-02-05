@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import ForeignKey
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import BIGINT
+from sqlalchemy import VARCHAR
 
 sql_utcnow = text('(now() at time zone \'utc\')')
 
@@ -25,8 +25,8 @@ class BaseMixin:
 
 
 class Mailing(BaseMixin, Base):
-    text: M[str | None] = column(nullable=True)
-    gender: M[str | None] = column(nullable=True)
+    text: M[str | None] = column(VARCHAR(4096), nullable=True)
+    gender: M[str | None] = column(VARCHAR(10), nullable=True)
     tariff_id: M[int | None] = column(nullable=True)
     template_id: M[int] = column(ForeignKey("mailing_templates.id", ondelete="CASCADE"))
 
@@ -35,20 +35,20 @@ class Mailing(BaseMixin, Base):
 
 
 class MailingTemplate(BaseMixin, Base):
-    title: M[str]
-    text: M[str]
-    gender: M[str | None] = column(nullable=True)
+    title: M[str] = column(VARCHAR(256))
+    text: M[str] = column(VARCHAR(4096))
+    gender: M[str | None] = column(VARCHAR(10), nullable=True)
     tariff_id: M[int | None] = column(nullable=True)
 
     mailings: M[list['Mailing']] = relationship(back_populates='template', lazy='noload')
 
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "bot_users"
 
     id: M[int] = column(primary_key=True, index=True)
-    chat_id: M[int] = column(type_=BIGINT())
-    name: M[str | None] = column(nullable=True)
-    gender: M[str | None] = column(nullable=True)
+    chat_id: M[str | None] = column(VARCHAR(40), nullable=True)
+    name: M[str | None] = column(VARCHAR(150), nullable=True)
+    gender: M[str | None] = column(VARCHAR(10), nullable=True)
     tariff_id: M[int | None] = column(nullable=True)
 
