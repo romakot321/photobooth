@@ -34,3 +34,4 @@ typing_extensions==4.12.2
 uvicorn==0.34.0
 yarl==1.18.3
 sqlalchemy-service @ https://github.com/romakot321/sqlalchemy-service/archive/main.zip#sha256=4fcb7c5c74dd51c31df542eb3e9dedf06af19fee2c9300f6125be2ac2a8faaec
+asyncmy==0.2.10

@@ -57,10 +57,14 @@
                 </div>
                 <div class="row mb-3">
                     <label class="form-label" for="templateTariff">Оплата</label>
-                    <select class="form-select" name="tariff_id" id="templateTariff">
-                        <option selected>-</option>
-                        <option value="-1">Есть</option>
-                    </select>
+                    <div id="templateTariff">
+                        {% for tariff in tariffs %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="{{ tariff.id }}" id="tariff{{ tariff.id }}">
+                            <label class="form-check-label" for="tariff{{ tariff.id }}"> {{ tariff.title }} </label>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
                 <div class="row mb-3">
                     <label class="form-label" for="templateGender">Пол</label>
@@ -107,6 +111,12 @@ function submitForm(event) {
     let obj = {};
     let formData = new FormData(event.target);
     formData.forEach((value, key) => value === "-" ? null : obj[key] = value);
+    let tariffs = [];
+    for (let i = 1; i <= {{ tariffs|length }}; i++) {
+        if (document.querySelector("#tariff" + i).checked)
+            tariffs.push(i);
+    }
+    obj["tariff_ids"] = tariffs;
 
     submitButton.value = "Отправка...";
 

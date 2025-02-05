@@ -3,6 +3,7 @@ import datetime as dt
 import locale
 
 from app.schemas.mailing_template import MailingTemplateSchema
+from app.schemas.tariff import TariffSchema
 
 #locale.setlocale(
 #    category=locale.LC_ALL,
@@ -14,7 +15,7 @@ class MailingSchema(BaseModel):
     id: int
     text: str | None = None
     gender: str | None = None
-    tariff_id: int | None = None
+    tariffs: list[TariffSchema] | None = None
     messages_count: int | None = None
     messages_sent: int | None = None
     template: MailingTemplateSchema | None = None
@@ -22,20 +23,14 @@ class MailingSchema(BaseModel):
 
     @computed_field
     @property
-    def text_display(self) -> str:
+    def text_display(self) -> str | None:
         return self.text or self.template.text
 
     @computed_field
     @property
     def gender_display(self) -> str:
-        gender = self.gender or self.template.gender
+        gender = self.gender or (None if self.template is None else self.template.gender)
         return {'f': "Женский", 'm': "Мужской"}.get(gender, "-")
-
-    @computed_field
-    @property
-    def tariff_display(self) -> str:
-        tariff_id = self.tariff_id or self.template.tariff_id
-        return "Есть" if tariff_id is not None else "-"
 
     @computed_field
     @property
@@ -48,14 +43,14 @@ class MailingSchema(BaseModel):
 class MailingCreateSchema(BaseModel):
     text: str | None = None
     gender: str | None = None
-    tariff_id: int | None = None
+    tariff_ids: list[int] | None = None
     template_id: int | None = None
 
 
 class MailingUpdateSchema(BaseModel):
     text: str | None = None
     gender: str | None = None
-    tariff_id: int | None = None
+    tariff_ids: list[int] | None = None
     template_id: int | None = None
 
 
@@ -63,4 +58,9 @@ class MailingSearchSchema(BaseModel):
     text: str | None = None
     page: int = 0
     count: int = 50
+
+
+class MailingTestSchema(BaseModel):
+    chat_id: int
+    text: str
 

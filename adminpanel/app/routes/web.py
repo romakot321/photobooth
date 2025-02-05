@@ -21,7 +21,8 @@ async def index_page(
 ):
     """Mailing templates page"""
     models: list[MailingTemplateSchema] = await template_service.list(MailingTemplateSearchSchema(text=text))
-    return templates.TemplateResponse("index.html", {"request": request, "templates": models})
+    tariffs = await template_service.list_tariffs()
+    return templates.TemplateResponse("index.html", {"request": request, "templates": models, "tariffs": tariffs})
 
 
 @router.get("/mailing", response_class=HTMLResponse)
@@ -46,13 +47,13 @@ async def create_mailing_page(
 ):
     if template_id is not None:
         template = await template_service.get(template_id)
-        messages_count = await user_service.count_messages_to_send(gender=template.gender, tariff_id=template.tariff_id)
     else:
-        template = MailingTemplateSchema()
-        messages_count = 0
+        template = None
+    messages_count = 0
+    tariffs = await template_service.list_tariffs()
     return templates.TemplateResponse(
         "mailing-create.html",
-        {"request": request, "template": template, "messages_count": messages_count}
+        {"request": request, "template": template, "messages_count": messages_count, "tariffs": tariffs}
     )
 
 

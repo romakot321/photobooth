@@ -22,7 +22,7 @@ COPY --from=PackageBuilder ./*.whl ./wheels/
 RUN pip3 install ./wheels/*.whl --no-warn-script-location
 
 COPY setup.py ./
-COPY ./ ./
+COPY --chown=python ./ ./
 RUN pip3 install .
 
 ENV PATH="$PATH:/home/python/.local/bin"

@@ -4,16 +4,30 @@ from app.schemas.mailing_template import MailingTemplateSchema
 from app.schemas.mailing_template import MailingTemplateSearchSchema
 from app.schemas.mailing_template import MailingTemplateCreateSchema
 from app.schemas.mailing_template import MailingTemplateUpdateSchema
-from app.db.tables import MailingTemplate
+from app.schemas.tariff import TariffSchema
+from app.db.tables import MailingTemplate, Tariff
 from app.repositories.mailing_template import MailingTemplateRepository
+from app.repositories.tariff import TariffRepository
 
 
 class MailingTemplateService:
     def __init__(
             self,
-            template_repository: MailingTemplateRepository = Depends()
+            template_repository: MailingTemplateRepository = Depends(),
+            tariff_repository: TariffRepository = Depends()
     ):
         self.template_repository = template_repository
+        self.tariff_repository = tariff_repository
+
+        self._tariffs_cache: list[TariffSchema] = []
+
+    async def list_tariffs(self) -> list[TariffSchema]:
+        if self._tariffs_cache:
+            return self._tariffs_cache
+        models = await self.tariff_repository.list()
+        schemas = [TariffSchema.model_validate(model) for model in models]
+        self._tariffs_cache = schemas
+        return schemas
 
     async def list(self, schema: MailingTemplateSearchSchema = None) -> list[MailingTemplateSchema]:
         models = await self.template_repository.list(**schema.model_dump(exclude_none=True))
@@ -24,7 +38,13 @@ class MailingTemplateService:
         return MailingTemplateSchema.model_validate(model)
 
     async def create(self, schema: MailingTemplateCreateSchema) -> MailingTemplateSchema:
-        model = MailingTemplate(**schema.model_dump(exclude_none=True))
+        state = schema.model_dump(exclude_none=True)
+        tariffs = []
+        if schema.tariff_ids:
+            for tariff_id in state.pop("tariff_ids"):
+                tariffs.append(await self.tariff_repository.get(tariff_id))
+        model = MailingTemplate(**state)
+        model.tariffs = tariffs
         model = await self.template_repository.create(model)
         return MailingTemplateSchema.model_validate(model)
 

@@ -6,7 +6,7 @@
         <input class="form-control me-2" type="search" placeholder="Текст" aria-label="Текст" name="text">
         <button class="btn btn-outline-success" type="submit">Поиск</button>
     </form>
-    <a type="button" class="btn text-nowrap btn-dark" href="/admin">Создать рассылку</a>
+    <a type="button" class="btn text-nowrap btn-dark" href="/admin/mailing/create">Создать рассылку</a>
 </div>
 {% endblock %}
 
@@ -32,7 +32,6 @@
                 <li class="list-group-item">
                     <div class="d-grid gap-2 d-lg-flex">
                         <a type="button" class="btn text-nowrap btn-outline-dark" href="/admin/mailing/{{ mailing.id }}">Статус</a>
-                        <button type="button" class="btn text-nowrap btn-outline-danger">Остановить</button>
                     </div>
                 </l1>
             </ul>

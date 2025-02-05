@@ -1,4 +1,4 @@
-from db.tables import Mailing, MailingTemplate
+from db.tables import MailingTemplate
 
 from sqlalchemy_service import BaseService as BaseRepository
 from sqlalchemy_service.base_db.base import Base as BaseTable
@@ -23,8 +23,8 @@ operation_comments = [
 ]
 
 
-class MailingRepository[Table: Mailing, int](BaseRepository):
-    base_table = Mailing
+class MailingTemplateRepository[Table: MailingTemplate, int](BaseRepository):
+    base_table = MailingTemplate
 
     @classmethod
     def init(
@@ -50,12 +50,9 @@ class MailingRepository[Table: Mailing, int](BaseRepository):
         )
         return await self.session.scalars(query)
 
-    async def get(self, model_id: int) -> Mailing:
-        return await self._get_one(id=model_id, select_in_load=[Mailing.tariffs, {"parent": Mailing.template, "children": [MailingTemplate.tariffs]}])
+    async def get(self, model_id: int) -> MailingTemplate:
+        return await self._get_one(id=model_id)
 
-    async def create(self, model: Mailing) -> Mailing:
-        return await self._create(model)
-
-    async def list(self, **filters) -> list[Mailing]:
+    async def list(self, **filters) -> list[MailingTemplate]:
         return list(await self._get_list(count=1000000, **filters))
 

@@ -5,6 +5,8 @@ import copy
 import json
 
 from app.schemas.action import MailingData
+from app.schemas.mailing import MailingTestData
+from app.services.mailing import MailingService
 
 
 class BotController:
@@ -57,4 +59,8 @@ class BotController:
         await app.dispatcher_instance.feed_webhook_update(
             app.bot_instance, app.bot_instance.session.json_loads(webhook_data)
         )
+
+    @classmethod
+    async def test_mailing(cls, **data):
+        await MailingService.test_mailing(MailingTestData.model_validate(data))
 

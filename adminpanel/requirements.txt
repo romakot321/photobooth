@@ -24,3 +24,4 @@ aiohttp==3.11.11
 starlette==0.45.3
 typing_extensions==4.12.2
 uvicorn==0.34.0
+asyncmy==0.2.10

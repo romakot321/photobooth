@@ -5,41 +5,19 @@ services:
     build:
       context: ./adminpanel
     container_name: photobooth_adminpanel_app
-    depends_on:
-      - postgres
     env_file:
       - .env
     restart: always
     networks:
-      global_network:
       default:
-    ports:
-      - "8001:80"
 
   bot:
     build:
       context: ./bot
     container_name: photobooth_adminpanel_bot
-    depends_on:
-      - postgres
     env_file:
       - .env
     restart: always
     networks:
-      global_network:
-      default:
-    ports:
-      - "8002:80"
-
-  postgres:
-    image: postgres:latest
-    container_name: photobooth_adminpanel_db
-    restart: always
-    env_file:
-      - .env
-    networks:
       default:
 
-networks:
-  global_network:
-    external: true

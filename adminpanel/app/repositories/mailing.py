@@ -1,6 +1,6 @@
 from sqlalchemy_service import BaseService as BaseRepository
 
-from app.db.tables import Mailing
+from app.db.tables import Mailing, MailingTemplate
 
 
 class MailingRepository[Table: Mailing, int](BaseRepository):
@@ -20,7 +20,7 @@ class MailingRepository[Table: Mailing, int](BaseRepository):
         return list(await self.session.scalars(query))
 
     async def get(self, model_id: int) -> Mailing:
-        return await self._get_one(id=model_id, select_in_load=Mailing.template)
+        return await self._get_one(id=model_id, select_in_load=[Mailing.tariffs, {"parent": Mailing.template, "children": [MailingTemplate.tariffs]}])
 
     async def update(self, model_id: int, **fields) -> Mailing:
         return await self._update(model_id, **fields)

@@ -1,24 +1,30 @@
 from loguru import logger
-from aiogram import Bot
+import aiogram
 import asyncio
+import os
 
 import app
 from db.tables import Mailing, User
 
 
 class _Sender:
-    def __init__(self, bot: Bot):
+    def __init__(self):
         self.is_locked = False
-        self.bot = bot
+        self.bot = aiogram.Bot(token=os.getenv("BOT_TOKEN"))
 
-    async def send(self, chat_ids: list[int], text: str):
+    async def send(self, chat_ids: list[int | str | None], text: str):
         while self.is_locked:
             await asyncio.sleep(0.1)
 
         self.is_locked = True
         for chat_id in chat_ids:
+            if chat_id is None:
+                continue
             await asyncio.sleep(0.2)
-            await self.bot.send_message(chat_id, text)
+            try:
+                await self.bot.send_message(int(chat_id), text)
+            except aiogram.exceptions.TelegramBadRequest:
+                continue
         self.is_locked = False
 
 
@@ -38,8 +44,27 @@ class _MailingHandler:
             self.message_count += len(chat_ids)
 
 
-sender = _Sender(app.bot_instance)
-handlers = []
+class _TestHandler:
+    def __init__(self, text: str, chat_ids: list[int], sender: _Sender):
+        self.text = text
+        self.chat_ids = chat_ids
+        self.sender = sender
+        self.message_count = 0
+
+    async def start(self):
+        for i in range(0, len(self.chat_ids), 5):
+            chat_ids = self.chat_ids[i:i + 5]
+            await self.sender.send(chat_ids, self.text)
+            self.message_count += len(chat_ids)
+
+
+sender = _Sender()
+handlers: list[_MailingHandler] = []
+
+
+def create_test_handler(text: str, *chat_ids: list[int]) -> _TestHandler:
+    global handlers, sender
+    return _TestHandler(text, chat_ids, sender)
 
 
 def create_mailing_handler(mailing: Mailing, users: list[User]) -> _MailingHandler:

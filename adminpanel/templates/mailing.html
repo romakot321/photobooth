@@ -18,7 +18,26 @@
             </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item">Пол: {{ mailing.gender_display }}</l1>
-                <li class="list-group-item">Оплата: {{ mailing.tariff_display }}</l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateTariff">Оплата</label>
+                        <div id="templatetariff">
+                            {% if mailing.tariffs is none %}
+                                {% for tariff in mailing.template.tariffs %}
+                                    <p>
+                                        {{ tariff.title }}
+                                    </p>
+                                {% endfor %}
+                            {% else %}
+                                {% for tariff in mailing.tariffs %}
+                                    <p>
+                                        {{ tariff.title }}
+                                    </p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </l1>
                 {% if mailing.messages_sent is none %}
                     <li class="list-group-item">Сообщений разослано: {{ mailing.messages_count }}</l1>
                 {% else %}

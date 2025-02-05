@@ -10,3 +10,6 @@ class MailingService:
     async def start(self, mailing_id: int):
         await self.bot_controller.start_mailing(mailing_id)
 
+    async def test(self, schema):
+        await self.bot_controller.test_mailing(**schema.model_dump())
+

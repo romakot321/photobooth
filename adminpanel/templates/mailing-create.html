@@ -2,7 +2,11 @@
 
 {% block actions %}
 <div class="d-grid gap-2">
-    <button id="submitButton" type="button" onclick="createMailing()" class="btn text-nowrap btn-primary">Сохранить и запустить</button>
+    <button type="button" onclick="createMailing(event)" class="btn text-nowrap btn-primary">Сохранить и запустить</button>
+    <div class="d-flex mb-3">
+        <input id="chatid-input" class="form-control me-2" type="number" placeholder="Chat id" aria-label="Текст" name="chatId">
+        <button type="button" onclick="testMailing(event)" class="btn text-nowrap btn-primary">Отправить себе</button>
+    </div>
     <a type="button" class="btn text-nowrap btn-danger" href="index.html">Отмена</a>
 </div>
 {% endblock %}
@@ -15,8 +19,8 @@
             <div class="card-body">
                 <h4 class="card-title mb-3">Создание рассылки</h4>
                 <div class="card-text">
-                    <label for="templateText" class="form-label">Текст</label>
-                    <textarea class="form-control col-sm-10" id="templateText" rows="10">{{ template.text }}</textarea>
+                    <label for="templateText" class="form-label">Текст(До 4096 символов)</label>
+                    <textarea maxlength="4096" class="form-control col-sm-10" id="templateText" rows="10">{{ template.text }}</textarea>
                 </div>
             </div>
             <ul class="list-group list-group-flush px-3">
@@ -39,14 +43,18 @@
                 <li class="list-group-item">
                     <div class="row mb-3">
                         <label class="form-label" for="templateTariff">Оплата</label>
-                        <select class="form-select" id="templateTariff">
-                            <option
-                                {% if (template.tariff is none) %} selected="selected" {% endif %}
-                                >-</option>
-                            <option value="-1"
-                                {% if (template.tariff) %} selected="selected" {% endif %}
-                                >Есть</option>
-                        </select>
+                        <div id="templatetariff">
+                            {% for tariff in tariffs %}
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    value="{{ tariff.id }}"
+                                    id="tariff{{ tariff.id }}"
+                                    {{ "checked" if tariff in template.tariffs }}>
+                                <label class="form-check-label" for="tariff{{ tariff.id }}"> {{ tariff.title }} </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </l1>
                 <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">0</mark></l1>
@@ -58,21 +66,23 @@
 
 <script>
 
-function createMailing() {
-    const submitButton = document.getElementById("submitButton");
-    const tariffInput = document.getElementById("templateTariff");
+function createMailing(event) {
+    const submitButton = event.target;
     const genderInput = document.getElementById("templateGender");
     const textInput = document.getElementById("templateText");
 
-    let tariff = tariffInput.value === "-" || tariffInput.value === "{{ template.tariff_id }}" ? null : tariffInput.value;
+    let tariffs = [];
+    for (let i = 1; i <= {{ tariffs|length }}; i++) {
+        if (document.querySelector("#tariff" + i).checked)
+            tariffs.push(i);
+    }
     let gender = genderInput.value === "-" || genderInput.value === "{{ template.gender }}" ? null : genderInput.value;
     let text = textInput.value === "" || textInput.value === "{{ template.text }}" ? null : textInput.value;
-    let templateId = {{ template.id }};
+    let templateId = {{ template.id|default(0) }};
 
-    let data = {tariff: tariff, gender: gender, text: text, template_id: templateId};
-    console.log("sending", data);
+    let data = {tariff_ids: tariffs, gender: gender, text: text, template_id: templateId};
 
-    submitButton.value = "Отправка...";
+    submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing", {
         method: 'POST',
         body: JSON.stringify(data),
@@ -85,7 +95,34 @@ function createMailing() {
             window.location.href = "/admin/mailing";
         },
         (error) => {
-            submitButton.value = "Ошибка";
+            submitButton.innerText = "Ошибка";
+        }
+    );
+}
+
+function testMailing(event) {
+    const submitButton = event.target;
+    const chatIdInput = document.getElementById("chatid-input");
+    const textInput = document.getElementById("templateText");
+
+    let text = textInput.value === "" ? "{{ template.text }}" : textInput.value;
+    let data = {chat_id: chatIdInput.value, text: text};
+
+    submitButton.innerText = "Отправка...";
+    let request = new Request("/api/mailing/test", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    fetch(request).then(
+        (response) => {
+            submitButton.innerText = "Отправлено";
+            setTimeout(() => submitButton.value = "Отправить себе", 20000);
+        },
+        (error) => {
+            submitButton.innerText = "Ошибка";
         }
     );
 }

@@ -38,4 +38,4 @@ COPY ./app ./app
 RUN pip3 install .
 
 ENV PATH="$PATH:/home/python/.local/bin"
-CMD gunicorn app.main:fastapi_app -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 --forwarded-allow-ips="*"
+CMD gunicorn app.main:fastapi_app -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 --forwarded-allow-ips="*" --reload
