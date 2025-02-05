@@ -37,11 +37,11 @@ class MailingRepository[Table: Mailing, int](BaseRepository):
         return await self.session.scalars(query)
 
     async def get(self, model_id: int) -> Mailing:
-        return await self._get_one(id=model_id)
+        return await self._get_one(id=model_id, select_in_load=Mailing.template)
 
     async def create(self, model: Mailing) -> Mailing:
         return await self._create(model)
 
-    async def list(self) -> list[Mailing]:
-        return list(await self._get_list(count=1000000))
+    async def list(self, **filters) -> list[Mailing]:
+        return list(await self._get_list(count=1000000, **filters))
 

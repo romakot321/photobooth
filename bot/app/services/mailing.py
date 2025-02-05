@@ -3,10 +3,14 @@ from loguru import logger
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram3_di import Depends
+import asyncio
 
+import app
 from app.repositories.mailing import MailingRepository
 from app.repositories.user import UserRepository
+from app.repositories.message import create_mailing_handler
 from app.schemas.action import MailingData
+from db.tables import Mailing, User
 
 
 class MailingService:
@@ -26,13 +30,11 @@ class MailingService:
 
     async def handle_start_mailing(self, data: MailingData, query: CallbackQuery, bot: Bot):
         mailing = await self.mailing_repository.get(data.mailing_id)
-        users = await self.user_repository.list()
-        logger.debug(users)
+        users = await self.user_repository.list(
+            tariff_id=mailing.tariff_id or mailing.template.tariff_id,
+            gender=mailing.gender or mailing.template.gender
+        )
 
-        for user in users:
-            if mailing.gender and user.gender != mailing.gender:
-                continue
-            if mailing.tariff_id and (mailing.tariff_id == -1 and user.tariff_id is None or mailing.tariff_id != user.tariff_id):
-                continue
-            await bot.send_message(user.chat_id, mailing.text)
+        handler = create_mailing_handler(mailing, users)
+        asyncio.create_task(handler.start())
 

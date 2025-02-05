@@ -40,6 +40,7 @@ class UserRepository[Table: User, int](BaseRepository):
         self.response.status_code = 201
         return await self.get(model.id)
 
-    async def list(self) -> list[User]:
-        return list(await self._get_list(count=1000000))
+    async def list(self, gender=None, tariff_id=None) -> list[User]:
+        filters = {k: v for k, v in (('gender', gender), ('tariff_id', tariff_id)) if v is not None}
+        return list(await self._get_list(count=1000000, **filters))
 
