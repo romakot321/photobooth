@@ -21,6 +21,7 @@ class MailingSchema(BaseModel):
     messages_sent: int | None = None
     template: MailingTemplateSchema | None = None
     god_mode: bool | None = None
+    without_tariff: bool | None = None
     created_at: dt.datetime
 
     @computed_field
@@ -54,6 +55,7 @@ class MailingCreateSchema(BaseModel):
     tariff_ids: list[int] | None = None
     template_id: int | None = None
     god_mode: bool | None = None
+    without_tariff: bool | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -62,6 +64,7 @@ class MailingUpdateSchema(BaseModel):
     tariff_ids: list[int] | None = None
     template_id: int | None = None
     god_mode: bool | None = None
+    without_tariff: bool | None = None
 
 
 class MailingSearchSchema(BaseModel):

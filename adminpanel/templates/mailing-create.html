@@ -73,7 +73,20 @@
                         </div>
                     </div>
                 </l1>
-                <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">{{ messagesCount }}</mark></l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateWithoutTariff">Нет оплаты</label>
+                        <select class="form-select" id="templateWithoutTariff">
+                            <option
+                                {% if (template.without_tariff is none) %} selected="selected" {% endif %}
+                                >-</option>
+                            <option value="1"
+                                {% if (template.without_tariff == "1") %} selected="selected" {% endif %}
+                                >Да</option>
+                        </select>
+                    </div>
+                </l1>
+                <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">{{ messages_count }}</mark></l1>
             </ul>
         </div>
 
@@ -86,6 +99,7 @@ function createMailing(event) {
     const submitButton = event.target;
     const genderInput = document.getElementById("templateGender");
     const godmodeInput = document.getElementById("templateGodmode");
+    const withoutTariffInput = document.getElementById("templateWithoutTariff");
     const textInput = document.getElementById("templateText");
 
     let tariffs = [];
@@ -95,10 +109,11 @@ function createMailing(event) {
     }
     let gender = genderInput.value === "-" || genderInput.value === "{{ template.gender }}" ? null : genderInput.value;
     let godMode = genderInput.value === "-" || genderInput.value === "{{ template.god_mode }}" ? null : godmodeInput.value;
+    let withoutTariff = withoutTariffInput.value === "-" || withoutTariffInput.value === "{{ template.without_tariff }}" ? null : withoutTariffInput.value;
     let text = textInput.value === "" || textInput.value === "{{ template.text }}" ? null : textInput.value;
     let templateId = {{ template.id|default(0) }} === 0 ? null : {{ template.id|default(0) }};
 
-    let data = {tariff_ids: tariffs, gender: gender, text: text, template_id: templateId, god_mode: +godMode};
+    let data = {tariff_ids: tariffs, gender: gender, text: text, template_id: templateId, god_mode: +godMode, without_tariff: +without_tariff};
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing", {

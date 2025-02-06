@@ -45,6 +45,7 @@ class Mailing(BaseMixin, Base):
     gender: M[str | None] = column(VARCHAR(10), nullable=True)
     template_id: M[int | None] = column(ForeignKey("mailing_templates.id", ondelete="CASCADE"), nullable=True)
     god_mode: M[bool | None] = column(nullable=True)
+    without_tariff: M[bool | None] = column(nullable=True)
 
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
     tariffs: M[list['Tariff']] = relationship(secondary="mailings_tariffs", back_populates="mailings", lazy="selectin")

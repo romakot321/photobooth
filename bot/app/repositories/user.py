@@ -41,10 +41,12 @@ class UserRepository[Table: User, int](BaseRepository):
         self.response.status_code = 201
         return await self.get(model.id)
 
-    async def list(self, gender=None, tariff_ids: list[int] = None, god_mode: bool = None) -> list[User]:
+    async def list(self, gender=None, without_tariff: bool = None, tariff_ids: list[int] = None, god_mode: bool = None) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
             query = query.filter_by(gender=gender)
+        if without_tariff:
+            tariff_ids = [None] if tariff_ids is None else tariff_ids + [None]
         if tariff_ids is not None and tariff_ids:
             query = query.filter(User.tariff_id.in_(tariff_ids))
         if god_mode is not None:
