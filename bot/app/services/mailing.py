@@ -54,7 +54,6 @@ class MailingService:
 
     @classmethod
     async def test_mailing(cls, data: MailingTestData):
-        text = data.text
-        handler = create_test_handler(text, data.chat_id)
+        handler = create_test_handler(data.text, data.buttons or [], data.chat_id)
         asyncio.create_task(handler.start())
 

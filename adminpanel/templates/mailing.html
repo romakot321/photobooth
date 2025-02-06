@@ -20,7 +20,7 @@
                 <li class="list-group-item">Пол: {{ mailing.gender_display }}</l1>
                 <li class="list-group-item">Хотя бы одна генерация в режиме творца: {{ mailing.god_mode_display }}</l1>
                 <li class="list-group-item">
-                    <div class="row mb-3">
+                    <div class="row">
                         <label class="form-label" for="templateTariff">Оплата</label>
                         <div id="templatetariff">
                             {% if mailing.tariffs is none %}
@@ -52,6 +52,17 @@
                                 aria-valuemax="100"
                                 style="width: {{ mailing.messages_sent / mailing.messages_count * 100 }}%"
                             ></div>
+                        </div>
+                    </li>
+                {% endif %}
+
+                {% if mailing.buttons %}
+                    <li class="list-group-item">
+                        <div>
+                            Кнопки:
+                            {% for button in mailing.buttons %}
+                            <p>- {{ button.text }}</p>
+                            {% endfor %}
                         </div>
                     </li>
                 {% endif %}

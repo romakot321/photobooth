@@ -86,6 +86,17 @@
                         </select>
                     </div>
                 </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                value="1"
+                                id="mailingPaymentButtonCheckbox">
+                            <label class="form-check-label" for="mailingPaymentButtonCheckbox">Добавить кнопку оплаты</label>
+                        </div>
+                    </div>
+                </l1>
                 <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">{{ messages_count }}</mark></l1>
             </ul>
         </div>
@@ -101,6 +112,7 @@ function createMailing(event) {
     const godmodeInput = document.getElementById("templateGodmode");
     const withoutTariffInput = document.getElementById("templateWithoutTariff");
     const textInput = document.getElementById("templateText");
+    const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
 
     let tariffs = [];
     for (let i = 1; i <= {{ tariffs|length }}; i++) {
@@ -113,7 +125,9 @@ function createMailing(event) {
     let text = textInput.value === "" || textInput.value === "{{ template.text }}" ? null : textInput.value;
     let templateId = {{ template.id|default(0) }} === 0 ? null : {{ template.id|default(0) }};
 
-    let data = {tariff_ids: tariffs, gender: gender, text: text, template_id: templateId, god_mode: +godMode, without_tariff: +without_tariff};
+    let data = {tariff_ids: tariffs, gender: gender, text: text, template_id: templateId, god_mode: +godMode, without_tariff: +withoutTariff};
+    if (mailingPaymentButtonInput.checked)
+        data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing", {
@@ -137,9 +151,12 @@ function testMailing(event) {
     const submitButton = event.target;
     const chatIdInput = document.getElementById("chatid-input");
     const textInput = document.getElementById("templateText");
+    const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
 
     let text = textInput.value === "" ? "{{ template.text }}" : textInput.value;
     let data = {chat_id: chatIdInput.value, text: text};
+    if (mailingPaymentButtonInput.checked)
+        data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing/test", {

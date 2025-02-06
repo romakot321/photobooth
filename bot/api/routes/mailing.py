@@ -8,8 +8,14 @@ router = APIRouter(prefix="/api/mailing", tags=["Mailing"])
 
 
 class MailingTestSchema(BaseModel):
+    class Button(BaseModel):
+        text: str
+        callback_data: str | None = None
+        url: str | None = None
+
     chat_id: int
     text: str
+    buttons: list[Button] | None = None
 
 
 @router.post("/test")

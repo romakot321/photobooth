@@ -6,8 +6,9 @@ from app.schemas.mailing import MailingSearchSchema
 from app.schemas.mailing import MailingCreateSchema
 from app.schemas.mailing import MailingUpdateSchema
 from app.schemas.mailing import MailingTestSchema
-from app.db.tables import Mailing
+from app.db.tables import Mailing, MailingButton
 from app.repositories.mailing import MailingRepository
+from app.repositories.mailing_button import MailingButtonRepository
 from app.repositories.bot import BotRepository
 from app.repositories.tariff import TariffRepository
 
@@ -17,11 +18,13 @@ class MailingService:
             self,
             mailing_repository: MailingRepository = Depends(),
             bot_repository: BotRepository = Depends(),
-            tariff_repository: TariffRepository = Depends()
+            tariff_repository: TariffRepository = Depends(),
+            button_repository: MailingButtonRepository = Depends()
     ):
         self.mailing_repository = mailing_repository
         self.bot_repository = bot_repository
         self.tariff_repository = tariff_repository
+        self.button_repository = button_repository
 
     async def list(self, schema: MailingSearchSchema = None) -> list[MailingSchema]:
         models = await self.mailing_repository.list(**schema.model_dump(exclude_none=True))
@@ -34,12 +37,21 @@ class MailingService:
     async def create_and_run(self, schema: MailingCreateSchema) -> MailingSchema:
         state = schema.model_dump(exclude_none=True)
         tariffs = []
+        buttons_states = state.pop("buttons") if "buttons" in state else None
+        buttons_models = []
+
         if schema.tariff_ids is not None:
             for tariff_id in state.pop("tariff_ids"):
                 tariffs.append(await self.tariff_repository.get(tariff_id))
         model = Mailing(**state)
         model.tariffs = tariffs
         model = await self.mailing_repository.create(model)
+        if buttons_states:
+            for button_state in buttons_states:
+                button = await self.button_repository.create(MailingButton(**button_state, mailing_id=model.id))
+                buttons_models.append(button)
+            model.buttons = buttons_models
+
         logger.debug(f"Running mailing {model.id=}")
         await self.bot_repository.trigger_mailing_run(model.id)
         return MailingSchema.model_validate(model)
@@ -52,5 +64,6 @@ class MailingService:
         await self.mailing_repository.delete(model_id)
 
     async def test(self, schema: MailingTestSchema):
-        await self.bot_repository.trigger_mailing_test(schema.chat_id, schema.text)
+        buttons = [i.model_dump() for i in schema.buttons] if schema.buttons else None
+        await self.bot_repository.trigger_mailing_test(schema.chat_id, schema.text, buttons)
 

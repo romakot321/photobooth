@@ -12,11 +12,20 @@ from app.schemas.tariff import TariffSchema
 #)
 
 
+class MailingButtonSchema(BaseModel):
+    text: str
+    callback_data: str | None = None
+    url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class MailingSchema(BaseModel):
     id: int
     text: str | None = None
     gender: str | None = None
     tariffs: list[TariffSchema] | None = None
+    buttons: list[MailingButtonSchema] | None = None
     messages_count: int | None = None
     messages_sent: int | None = None
     template: MailingTemplateSchema | None = None
@@ -56,6 +65,7 @@ class MailingCreateSchema(BaseModel):
     template_id: int | None = None
     god_mode: bool | None = None
     without_tariff: bool | None = None
+    buttons: list[MailingButtonSchema] | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -65,6 +75,7 @@ class MailingUpdateSchema(BaseModel):
     template_id: int | None = None
     god_mode: bool | None = None
     without_tariff: bool | None = None
+    buttons: list[MailingButtonSchema] | None = None
 
 
 class MailingSearchSchema(BaseModel):
@@ -76,4 +87,5 @@ class MailingSearchSchema(BaseModel):
 class MailingTestSchema(BaseModel):
     chat_id: int
     text: str
+    buttons: list[MailingButtonSchema] | None = None
 

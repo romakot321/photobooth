@@ -50,6 +50,19 @@ class Mailing(BaseMixin, Base):
 
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
     tariffs: M[list['Tariff']] = relationship(secondary="mailings_tariffs", back_populates="mailings", lazy="selectin")
+    buttons: M[list['MailingButton']] = relationship(back_populates="mailing", lazy="selectin")
+
+
+class MailingButton(Base):
+    __tablename__ = "mailing_buttons"
+
+    id: M[int] = column(primary_key=True)
+    text: M[str]
+    callback_data: M[str | None] = column(nullable=True)
+    url: M[str | None] = column(nullable=True)
+    mailing_id: M[int] = column(ForeignKey('mailings.id', ondelete="CASCADE"))
+
+    mailing: M['Mailing'] = relationship(back_populates="buttons", lazy="noload")
 
 
 class MailingTemplate(BaseMixin, Base):

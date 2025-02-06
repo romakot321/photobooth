@@ -98,6 +98,7 @@ def setup_bot(application: FastAPI):
 
     app.bot_instance = bot
     app.dispatcher_instance = dispatcher
+    return
 
     if BOT_WEBHOOK_URL:
         dispatcher.startup.register(dispatcher_startup)
@@ -133,6 +134,7 @@ async def run_polling():
     bot = Bot(token=BOT_TOKEN)
     dispatcher = Dispatcher()
     _setup_dispatcher(dispatcher)
+    return
 
     await bot.delete_webhook()
     logger.info("Bot started")
