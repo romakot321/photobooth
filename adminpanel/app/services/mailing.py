@@ -1,16 +1,19 @@
-from fastapi import Depends
+from fastapi import Depends, File, UploadFile
 from loguru import logger
+from starlette import middleware
 
-from app.schemas.mailing import MailingSchema
+from app.schemas.mailing import MailingImageSchema, MailingSchema
 from app.schemas.mailing import MailingSearchSchema
 from app.schemas.mailing import MailingCreateSchema
 from app.schemas.mailing import MailingUpdateSchema
 from app.schemas.mailing import MailingTestSchema
-from app.db.tables import Mailing, MailingButton
+from app.db.tables import Mailing, MailingButton, MailingImage
 from app.repositories.mailing import MailingRepository
 from app.repositories.mailing_button import MailingButtonRepository
 from app.repositories.bot import BotRepository
 from app.repositories.tariff import TariffRepository
+from app.repositories.image import ImageRepository
+from app.repositories.storage import StorageRepository
 
 
 class MailingService:
@@ -19,12 +22,16 @@ class MailingService:
             mailing_repository: MailingRepository = Depends(),
             bot_repository: BotRepository = Depends(),
             tariff_repository: TariffRepository = Depends(),
-            button_repository: MailingButtonRepository = Depends()
+            button_repository: MailingButtonRepository = Depends(),
+            image_repository: ImageRepository = Depends(),
+            storage_repository: StorageRepository = Depends()
     ):
         self.mailing_repository = mailing_repository
         self.bot_repository = bot_repository
         self.tariff_repository = tariff_repository
         self.button_repository = button_repository
+        self.image_repository = image_repository
+        self.storage_repository = storage_repository
 
     async def list(self, schema: MailingSearchSchema = None) -> list[MailingSchema]:
         models = await self.mailing_repository.list(**schema.model_dump(exclude_none=True))
@@ -38,6 +45,7 @@ class MailingService:
         state = schema.model_dump(exclude_none=True)
         tariffs = []
         buttons_states = state.pop("buttons") if "buttons" in state else None
+        images_filenames = state.pop("images") if "images" in state else None
         buttons_models = []
 
         if schema.tariff_ids is not None:
@@ -51,6 +59,10 @@ class MailingService:
                 button = await self.button_repository.create(MailingButton(**button_state, mailing_id=model.id))
                 buttons_models.append(button)
             model.buttons = buttons_models
+        if images_filenames:
+            for image_filename in images_filenames:
+                image = await self.image_repository.update(image_filename, mailing_id=model.id)
+                model.images.append(image)
 
         logger.debug(f"Running mailing {model.id=}")
         await self.bot_repository.trigger_mailing_run(model.id)
@@ -65,5 +77,12 @@ class MailingService:
 
     async def test(self, schema: MailingTestSchema):
         buttons = [i.model_dump() for i in schema.buttons] if schema.buttons else None
-        await self.bot_repository.trigger_mailing_test(schema.chat_id, schema.text, buttons)
+        await self.bot_repository.trigger_mailing_test(schema.chat_id, schema.text, buttons, schema.image_filename)
+
+    async def store_image(self, file: UploadFile) -> MailingImageSchema:
+        filename = self.storage_repository.generate_image_filename()
+        model = MailingImage(filename=filename)
+        self.storage_repository.store_image(filename, file.file.read())
+        model = await self.image_repository.create(model)
+        return MailingImageSchema.model_validate(model)
 

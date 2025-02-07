@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 
 from app.services.mailing import MailingService
-from app.schemas.mailing import MailingSearchSchema, MailingUpdateSchema
+from app.schemas.mailing import MailingImageSchema, MailingSearchSchema, MailingUpdateSchema
 from app.schemas.mailing import MailingSchema, MailingCreateSchema
 from app.schemas.mailing import MailingTestSchema
 
@@ -22,6 +22,14 @@ async def get_mailing(
         service: MailingService = Depends()
 ):
     return await service.get(mailing_id)
+
+
+@router.post("/image", response_model=MailingImageSchema)
+async def store_mailing_image(
+        file: UploadFile = File(...),
+        service: MailingService = Depends()
+):
+    return await service.store_image(file)
 
 
 @router.post("/test", status_code=200)

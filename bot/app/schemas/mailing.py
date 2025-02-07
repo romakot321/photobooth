@@ -11,4 +11,5 @@ class MailingTestData(BaseModel):
     chat_id: int
     text: str
     buttons: list[MailingButtonData] | None = None
+    image_filename: str | None = None
 

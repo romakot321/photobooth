@@ -16,6 +16,7 @@ class MailingTestSchema(BaseModel):
     chat_id: int
     text: str
     buttons: list[Button] | None = None
+    image_filename: str | None = None
 
 
 @router.post("/test")

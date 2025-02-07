@@ -20,6 +20,13 @@ class MailingButtonSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MailingImageSchema(BaseModel):
+    id: int
+    filename: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class MailingSchema(BaseModel):
     id: int
     text: str | None = None
@@ -32,11 +39,12 @@ class MailingSchema(BaseModel):
     god_mode: bool | None = None
     without_tariff: bool | None = None
     created_at: dt.datetime
+    images: list[MailingImageSchema] | None = None
 
     @computed_field
     @property
     def text_display(self) -> str | None:
-        return self.text or self.template.text
+        return self.text or ('' if self.template is None else self.template.text)
 
     @computed_field
     @property
@@ -66,6 +74,7 @@ class MailingCreateSchema(BaseModel):
     god_mode: bool | None = None
     without_tariff: bool | None = None
     buttons: list[MailingButtonSchema] | None = None
+    images: list[str] | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -76,6 +85,7 @@ class MailingUpdateSchema(BaseModel):
     god_mode: bool | None = None
     without_tariff: bool | None = None
     buttons: list[MailingButtonSchema] | None = None
+    images: list[str] | None = None
 
 
 class MailingSearchSchema(BaseModel):
@@ -88,4 +98,4 @@ class MailingTestSchema(BaseModel):
     chat_id: int
     text: str
     buttons: list[MailingButtonSchema] | None = None
-
+    images: list[int] | None = None

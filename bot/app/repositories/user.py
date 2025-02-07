@@ -2,7 +2,7 @@ from db.tables import Generation, User
 from sqlalchemy_service import BaseService as BaseRepository
 from sqlalchemy_service.base_db.base import Base as BaseTable
 from sqlalchemy_service.base_db.base import get_session
-from sqlalchemy import not_
+from sqlalchemy import not_, or_
 
 from typing import TypedDict, Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,10 +45,13 @@ class UserRepository[Table: User, int](BaseRepository):
         query = self._get_list_query(count=10000000)
         if gender is not None:
             query = query.filter_by(gender=gender)
-        if without_tariff:
-            tariff_ids = [None] if tariff_ids is None else tariff_ids + [None]
         if tariff_ids is not None and tariff_ids:
-            query = query.filter(User.tariff_id.in_(tariff_ids))
+            if without_tariff:
+                query = query.filter(or_(User.tariff_id.in_(tariff_ids), User.tariff_id == None))
+            else:
+                query = query.filter(User.tariff_id.in_(tariff_ids))
+        elif without_tariff:
+            query = query.filter_by(tariff_id=None)
         if god_mode is not None:
             if god_mode:
                 query = query.filter(User.generations.any(Generation.is_god_mode == True))

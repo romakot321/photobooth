@@ -11,7 +11,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import ForeignKey
 from sqlalchemy import text
 
-sql_utcnow = text('(now() at time zone \'utc\')')
+sql_utcnow = text('now()')
 
 
 class BaseMixin:
@@ -22,7 +22,7 @@ class BaseMixin:
 
     created_at: M[dt.datetime] = column(server_default=sql_utcnow)
     updated_at: M[dt.datetime | None] = column(nullable=True, onupdate=sql_utcnow)
-    id: M[int] = column(primary_key=True, index=True)
+    id: M[int] = column(primary_key=True, index=True, autoincrement=True)
 
 
 class MailingTariff(Base):
@@ -51,6 +51,7 @@ class Mailing(BaseMixin, Base):
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
     tariffs: M[list['Tariff']] = relationship(secondary="mailings_tariffs", back_populates="mailings", lazy="selectin")
     buttons: M[list['MailingButton']] = relationship(back_populates="mailing", lazy="selectin")
+    images: M[list['MailingImage']] = relationship(back_populates="mailing", lazy="selectin")
 
 
 class MailingButton(Base):
@@ -73,6 +74,13 @@ class MailingTemplate(BaseMixin, Base):
 
     mailings: M[list['Mailing']] = relationship(back_populates='template', lazy='noload')
     tariffs: M[list['Tariff']] = relationship(secondary="mailing_templates_tariffs", back_populates="mailing_templates", lazy="selectin")
+
+
+class MailingImage(BaseMixin, Base):
+    filename: M[str]
+    mailing_id: M[int | None] = column(ForeignKey('mailings.id', ondelete="CASCADE"), nullable=True)
+
+    mailing: M['Mailing'] = relationship(back_populates="images", lazy="noload")
 
 
 class Tariff(Base):
