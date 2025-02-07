@@ -9,7 +9,7 @@ import app
 from app.repositories.mailing import MailingRepository
 from app.repositories.mailing_template import MailingTemplateRepository
 from app.repositories.user import UserRepository
-from app.repositories.message import create_mailing_handler, create_test_handler
+from app.repositories.message import create_mailing_handler, create_test_handler, get_mailing_messages_count
 from app.schemas.action import MailingData
 from app.schemas.mailing import MailingTestData
 from db.tables import Mailing, User
@@ -51,6 +51,11 @@ class MailingService:
 
         handler = create_mailing_handler(mailing, users)
         asyncio.create_task(handler.start())
+
+    @classmethod
+    async def get_mailing_messages_sent(cls, mailing_id) -> int:
+        count = get_mailing_messages_count(mailing_id)
+        return count or 0
 
     @classmethod
     async def test_mailing(cls, data: MailingTestData):

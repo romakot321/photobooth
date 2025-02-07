@@ -65,3 +65,7 @@ class BotController:
     async def test_mailing(cls, **data):
         asyncio.create_task(MailingService.test_mailing(MailingTestData.model_validate(data)))
 
+    @classmethod
+    async def get_mailing_messages_count(cls, mailing_id: int) -> int:
+        return await MailingService.get_mailing_messages_sent(mailing_id)
+

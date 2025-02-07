@@ -34,3 +34,10 @@ async def start_mailing(
 ):
     return await service.start(mailing_id)
 
+
+@router.get("/{mailing_id}/progress")
+async def get_mailing_messages_count(
+        mailing_id: int,
+        service: MailingService = Depends()
+) -> int:
+    return await service.get_mailing_messages_count(mailing_id)

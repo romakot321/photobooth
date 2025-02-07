@@ -2,7 +2,8 @@ from fastapi import Depends, File, UploadFile
 from loguru import logger
 from starlette import middleware
 
-from app.schemas.mailing import MailingImageSchema, MailingSchema
+from app.repositories.user import UserRepository
+from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSchema
 from app.schemas.mailing import MailingSearchSchema
 from app.schemas.mailing import MailingCreateSchema
 from app.schemas.mailing import MailingUpdateSchema
@@ -24,7 +25,8 @@ class MailingService:
             tariff_repository: TariffRepository = Depends(),
             button_repository: MailingButtonRepository = Depends(),
             image_repository: ImageRepository = Depends(),
-            storage_repository: StorageRepository = Depends()
+            storage_repository: StorageRepository = Depends(),
+            user_repository: UserRepository = Depends()
     ):
         self.mailing_repository = mailing_repository
         self.bot_repository = bot_repository
@@ -32,6 +34,7 @@ class MailingService:
         self.button_repository = button_repository
         self.image_repository = image_repository
         self.storage_repository = storage_repository
+        self.user_repository = user_repository
 
     async def list(self, schema: MailingSearchSchema = None) -> list[MailingSchema]:
         models = await self.mailing_repository.list(**schema.model_dump(exclude_none=True))
@@ -41,19 +44,30 @@ class MailingService:
         model = await self.mailing_repository.get(mailing_id)
         return MailingSchema.model_validate(model)
 
+    async def count_messages_to_send(self, schema: MailingMessagesCountSchema) -> int:
+        return await self.user_repository.count(
+            tariff_ids=schema.tariff_ids,
+            god_mode=schema.god_mode,
+            without_tariff=schema.without_tariff,
+            gender=schema.gender
+        )
+
     async def create_and_run(self, schema: MailingCreateSchema) -> MailingSchema:
         state = schema.model_dump(exclude_none=True)
         tariffs = []
         buttons_states = state.pop("buttons") if "buttons" in state else None
         images_filenames = state.pop("images") if "images" in state else None
         buttons_models = []
+        messages_count = await self.count_messages_to_send(schema)
 
         if schema.tariff_ids is not None:
             for tariff_id in state.pop("tariff_ids"):
                 tariffs.append(await self.tariff_repository.get(tariff_id))
-        model = Mailing(**state)
+
+        model = Mailing(messages_count=messages_count, **state)
         model.tariffs = tariffs
         model = await self.mailing_repository.create(model)
+
         if buttons_states:
             for button_state in buttons_states:
                 button = await self.button_repository.create(MailingButton(**button_state, mailing_id=model.id))
@@ -66,6 +80,7 @@ class MailingService:
 
         logger.debug(f"Running mailing {model.id=}")
         await self.bot_repository.trigger_mailing_run(model.id)
+
         return MailingSchema.model_validate(model)
 
     async def update(self, model_id: int, schema: MailingUpdateSchema) -> MailingSchema:
@@ -85,4 +100,12 @@ class MailingService:
         self.storage_repository.store_image(filename, file.file.read())
         model = await self.image_repository.create(model)
         return MailingImageSchema.model_validate(model)
+
+    async def get_mailing_progress(self, mailing_id: int) -> MailingProgressSchema:
+        mailing = await self.mailing_repository.get(mailing_id)
+        return MailingProgressSchema(
+            id=mailing_id,
+            messages_sent=await self.bot_repository.get_mailing_messages_count(mailing_id),
+            messages_count=mailing.messages_count
+        )
 

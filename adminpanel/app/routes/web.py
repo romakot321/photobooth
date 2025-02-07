@@ -14,6 +14,7 @@ router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="templates")
 
 
+
 @router.get("", response_class=HTMLResponse)
 async def index_page(
         request: Request,
@@ -48,9 +49,10 @@ async def create_mailing_page(
 ):
     if template_id is not None:
         template = await template_service.get(template_id)
+        messages_count = await template_service.get_messages_to_send_count(template_id)
     else:
         template = None
-    messages_count = "Будет сделано позже"
+        messages_count = ""
     tariffs = await template_service.list_tariffs()
     return templates.TemplateResponse(
         "mailing-create.html",
@@ -65,5 +67,6 @@ async def mailing_details_page(
         mailing_service: MailingService = Depends()
 ):
     mailing: MailingSchema = await mailing_service.get(mailing_id)
-    return templates.TemplateResponse("mailing.html", {"request": request, "mailing": mailing})
+    progress = await mailing_service.get_mailing_progress(mailing_id)
+    return templates.TemplateResponse("mailing.html", {"request": request, "mailing": mailing, "mailing_progress": progress})
 

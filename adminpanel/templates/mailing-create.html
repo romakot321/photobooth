@@ -18,9 +18,8 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title mb-3">Создание рассылки</h4>
-                <div>
                 <div class="mb-3">
-                    <label for="formFile" class="form-label">Default file input example</label>
+                    <label for="formFile" class="form-label">Картинка</label>
                     <input onchange="previewFile()" class="form-control" type="file" id="formFile">
                     <img src="" alt="" class="mt-1">
                 </div>
@@ -33,7 +32,7 @@
                 <li class="list-group-item">
                     <div class="row mb-3">
                         <label class="form-label" for="templateGender">Пол</label>
-                        <select class="form-select" id="templateGender">
+                        <select class="form-select" onchange="recalculateMessagesCount()" id="templateGender">
                             <option
                                 {% if (template.gender is none) %} selected="selected" {% endif %}
                                 >-</option>
@@ -49,7 +48,7 @@
                 <li class="list-group-item">
                     <div class="row mb-3">
                         <label class="form-label" for="templateGodmode">Хотя бы одна генерация в режиме творца</label>
-                        <select class="form-select" id="templateGodmode">
+                        <select class="form-select" onchange="recalculateMessagesCount()" id="templateGodmode">
                             <option
                                 {% if (template.god_mode is none) %} selected="selected" {% endif %}
                                 >-</option>
@@ -69,6 +68,7 @@
                             {% for tariff in tariffs %}
                             <div class="form-check">
                                 <input class="form-check-input"
+                                    onchange="recalculateMessagesCount()"
                                     type="checkbox"
                                     value="{{ tariff.id }}"
                                     id="tariff{{ tariff.id }}"
@@ -82,7 +82,7 @@
                 <li class="list-group-item">
                     <div class="row mb-3">
                         <label class="form-label" for="templateWithoutTariff">Нет оплаты</label>
-                        <select class="form-select" id="templateWithoutTariff">
+                        <select class="form-select" onchange="recalculateMessagesCount()" id="templateWithoutTariff">
                             <option
                                 {% if (template.without_tariff is none) %} selected="selected" {% endif %}
                                 >-</option>
@@ -133,7 +133,15 @@ function createMailing(event) {
     let text = textInput.value === "" || textInput.value === "{{ template.text }}" ? null : textInput.value;
     let templateId = {{ template.id|default(0) }} === 0 ? null : {{ template.id|default(0) }};
 
-    let data = {tariff_ids: tariffs, gender: gender, text: text, template_id: templateId, god_mode: godMode, without_tariff: withoutTariff, images: [imagesFilenames.length > 0 ? imagesFilenames[0] : null]};
+    let data = {
+        tariff_ids: tariffs,
+        gender: gender,
+        text: text,
+        template_id: templateId,
+        god_mode: godMode,
+        without_tariff: +withoutTariff,
+        images: imagesFilenames.length > 0 ? [imagesFilenames[0]] : null
+    };
     if (mailingPaymentButtonInput.checked)
         data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
     console.log(data);
@@ -146,14 +154,16 @@ function createMailing(event) {
             'Content-Type': 'application/json',
         },
     });
-    fetch(request).then(
-        (response) => {
-            // window.location.href = "/admin/mailing";
-        },
-        (error) => {
-            submitButton.innerText = "Ошибка";
-        }
-    );
+    fetch(request)
+        .then((response) => response.json())
+        .then(
+            (response) => {
+                console.log(response)
+                if (response.status != 422)
+                    window.location.href = "/admin/mailing/" + response.id;
+            }
+        )
+        .catch((error) => { submitButton.innerText = "Ошибка"; console.log(error) });
 }
 
 function testMailing(event) {
@@ -179,11 +189,39 @@ function testMailing(event) {
         (response) => {
             submitButton.innerText = "Отправлено";
             setTimeout(() => submitButton.value = "Отправить себе", 20000);
-        },
-        (error) => {
-            submitButton.innerText = "Ошибка";
         }
-    );
+    ).catch((error) => { submitButton.innerText = "Ошибка"; });
+}
+
+function recalculateMessagesCount() {
+    const genderInput = document.getElementById("templateGender");
+    const godModeInput = document.getElementById("templateGodmode");
+    const withoutTariffInput = document.getElementById("templateWithoutTariff");
+    const messageCountElement = document.getElementById("messagesCount");
+    let data = {};
+    let tariffs_param = "";
+
+    let tariffs = [];
+    for (let i = 1; i <= {{ tariffs|length }}; i++) {
+        if (document.querySelector("#tariff" + i).checked)
+            tariffs.push(i);
+    }
+    if (tariffs)
+        tariffs.forEach(el => tariffs_param += "tariff_ids=" + el + "&");
+    let gender = genderInput.value === "-" ? ("{{ template.gender }}" == "None" ? null : "{{ template.gender }}") : genderInput.value;
+    if (gender != null)
+        data["gender"] = gender;
+    let godMode = godModeInput.value === "-" ? ("{{ template.god_mode }}" == "None" ? null : "{{ template.god_mode }}") : godModeInput.value;
+    if (godMode != null)
+        data["god_mode"] = godMode;
+    let withoutTariff = withoutTariffInput.value === "-" ? ("{{ template.without_tariff }}" == "None" ? null : "{{ template.without_tariff }}") : withoutTariffInput.value;
+    if (withoutTariff != null)
+        data["without_tariff"] = +withoutTariff;
+
+    fetch("/api/mailing/messages?" + new URLSearchParams(data) + "&" + tariffs_param.replace(/^\&+|\&+$/g, ''))
+        .then((resp) => resp.text())
+        .then((resp) => messageCountElement.innerText = resp)
+        .catch((error) => console.log(error));
 }
 
 function previewFile() {

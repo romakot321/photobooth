@@ -98,4 +98,18 @@ class MailingTestSchema(BaseModel):
     chat_id: int
     text: str
     buttons: list[MailingButtonSchema] | None = None
-    images: list[int] | None = None
+    image_filename: str | None = None
+
+
+class MailingProgressSchema(BaseModel):
+    id: int
+    messages_sent: int | None = None
+    messages_count: int
+
+
+class MailingMessagesCountSchema(BaseModel):
+    gender: str | None = None
+    tariff_ids: list[int] | None = None
+    god_mode: bool | None = None
+    without_tariff: bool | None = None
+

@@ -47,6 +47,7 @@ class Mailing(BaseMixin, Base):
     template_id: M[int] = column(ForeignKey("mailing_templates.id", ondelete="CASCADE"))
     god_mode: M[bool | None] = column(nullable=True)
     without_tariff: M[bool | None] = column(nullable=True)
+    messages_count: M[int]
 
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
     tariffs: M[list['Tariff']] = relationship(secondary="mailings_tariffs", back_populates="mailings", lazy="selectin")
@@ -91,4 +92,26 @@ class Tariff(Base):
 
     mailings: M[list['Mailing']] = relationship(secondary="mailings_tariffs", back_populates="tariffs")
     mailing_templates: M[list['MailingTemplate']] = relationship(secondary="mailing_templates_tariffs", back_populates="tariffs")
+
+
+class User(Base):
+    __tablename__ = "bot_users"
+
+    id: M[int] = column(primary_key=True, index=True)
+    chat_id: M[str | None] = column(nullable=True)
+    name: M[str | None] = column(nullable=True)
+    gender: M[str | None] = column(nullable=True)
+    tariff_id: M[int | None] = column(nullable=True)
+
+    generations: M[list['Generation']] = relationship(back_populates='user', lazy='noload')
+
+
+class Generation(Base):
+    __tablename__ = "generations"
+
+    id: M[int] = column(primary_key=True)
+    user_id: M[int] = column(ForeignKey("bot_users.id", ondelete="CASCADE"))
+    is_god_mode: M[bool]
+
+    user: M['User'] = relationship(back_populates="generations", lazy="noload")
 

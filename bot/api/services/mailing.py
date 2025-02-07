@@ -13,3 +13,6 @@ class MailingService:
     async def test(self, schema):
         await self.bot_controller.test_mailing(**schema.model_dump())
 
+    async def get_mailing_messages_count(self, mailing_id: int) -> int:
+        return await self.bot_controller.get_mailing_messages_count(mailing_id)
+

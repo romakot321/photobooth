@@ -1,8 +1,10 @@
+import os
 from fastapi import FastAPI
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic_settings import BaseSettings
 from loguru import logger
 # from fastapi_utils.tasks import repeat_every
@@ -68,6 +70,7 @@ def init_web_application():
     application.include_router(web_router)
     application.include_router(mailing_template_router)
     application.include_router(mailing_router)
+    application.mount("/static", StaticFiles(directory=os.getenv("IMAGE_STORAGE_PATH", "images")))
 
     attach_admin_panel(application)
 

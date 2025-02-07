@@ -35,26 +35,24 @@ class _Sender:
         return keyboard
 
     async def _send_message(self, chat_id: int, text: str, keyboard: InlineKeyboardMarkup | None, image_path: str | None):
-        print(image_path)
         try:
             if image_path is not None:
                 await self.bot.send_photo(chat_id=chat_id, caption=text, photo=FSInputFile(image_path), reply_markup=keyboard)
             else:
                 await self.bot.send_message(chat_id, text, reply_markup=keyboard)
         except (aiogram.exceptions.TelegramBadRequest, aiogram.exceptions.TelegramForbiddenError) as e:
-            print(e)
             pass
 
     async def send(self, chat_ids: list[int | str | None], text: str, buttons: list[_Button], image_path: str | None):
         while self.is_locked:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
         keyboard = self._build_keyboard(buttons)
 
         self.is_locked = True
         for chat_id in chat_ids:
             if chat_id is None:
                 continue
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.034)
             await self._send_message(int(chat_id), text, keyboard, image_path)
         self.is_locked = False
 
@@ -67,6 +65,7 @@ class _MailingHandler:
         self.users = users
         self.sender = sender
         self.message_count = 0
+        self.is_finished = False
 
     def _get_image_path(self) -> str | None:
         if not self.mailing.images:
@@ -80,6 +79,7 @@ class _MailingHandler:
             chat_ids = [u.chat_id for u in self.users[i:i + 5]]
             await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path())
             self.message_count += len(chat_ids)
+        self.is_finished = True
 
 
 class _TestHandler:
@@ -121,9 +121,9 @@ def create_mailing_handler(mailing: Mailing, users: list[User]) -> _MailingHandl
     return handler
 
 
-def get_messages_count(mailing: Mailing) -> int | None:
+def get_mailing_messages_count(mailing_id: int) -> int | None:
     for handler in handlers:
-        if handler.mailing.id == mailing.id:
+        if handler.mailing.id == mailing_id:
             return handler.message_count
     return None
 

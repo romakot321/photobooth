@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 
 from app.services.mailing import MailingService
-from app.schemas.mailing import MailingImageSchema, MailingSearchSchema, MailingUpdateSchema
+from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSearchSchema, MailingUpdateSchema
 from app.schemas.mailing import MailingSchema, MailingCreateSchema
 from app.schemas.mailing import MailingTestSchema
 
@@ -14,6 +14,17 @@ async def list_mailings(
         service: MailingService = Depends()
 ):
     return await service.list(schema)
+
+
+@router.get("/messages", response_model=int)
+async def calculate_messages_to_send_count(
+        tariff_ids: list[int] | None = Query(None),
+        schema: MailingMessagesCountSchema = Depends(),
+        service: MailingService = Depends()
+):
+    print(tariff_ids)
+    schema.tariff_ids = tariff_ids
+    return await service.count_messages_to_send(schema)
 
 
 @router.get("/{mailing_id}", response_model=MailingSchema)
@@ -63,4 +74,12 @@ async def delete_mailing(
         service: MailingService = Depends()
 ):
     return await service.delete(mailing_id)
+
+
+@router.get("/{mailing_id}/progress", response_model=MailingProgressSchema)
+async def get_mailing_progress(
+        mailing_id: int,
+        service: MailingService = Depends()
+):
+    return await service.get_mailing_progress(mailing_id)
 
