@@ -45,7 +45,9 @@ class MailingService:
             tariff_ids=tariff_ids,
             god_mode=mailing.god_mode or (mailing.god_mode if mailing.template is None else mailing.template.god_mode),
             without_tariff=mailing.without_tariff or (mailing.without_tariff if mailing.template is None else mailing.template.without_tariff),
-            gender=mailing.gender or (None if mailing.template is None else mailing.template.gender)
+            gender=mailing.gender or (None if mailing.template is None else mailing.template.gender),
+            created_from=mailing.created_from,
+            created_to=mailing.created_to,
         )
         logger.debug(f"Starting mailing({mailing.id=}) for {len(users)} users")
 

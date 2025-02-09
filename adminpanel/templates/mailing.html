@@ -44,7 +44,21 @@
                         </div>
                     </div>
                 </l1>
-                {% if mailing_progress.messages_sent is none or mailing_progress.messages_sent == mailing_progress.messages_count %}
+                <li class="list-group-item">Дата регистрации от: {{ mailing.created_from_display }}</l1>
+                <li class="list-group-item">Дата регистрации до: {{ mailing.created_to_display }}</l1>
+
+                {% if mailing.buttons %}
+                    <li class="list-group-item">
+                        <div>
+                            Кнопки:
+                            {% for button in mailing.buttons %}
+                            <p>- {{ button.text }}</p>
+                            {% endfor %}
+                        </div>
+                    </li>
+                {% endif %}
+
+                {% if mailing_progress.messages_sent == 0 or mailing_progress.messages_sent == mailing_progress.messages_count %}
                     <li class="list-group-item">Сообщений разослано: {{ mailing_progress.messages_count }}</l1>
                 {% else %}
                     <li class="list-group-item">
@@ -57,17 +71,6 @@
                                 aria-valuemax="100"
                                 style="width: {{ (mailing_progress.messages_sent / mailing_progress.messages_count * 100)|int }}%"
                             ></div>
-                        </div>
-                    </li>
-                {% endif %}
-
-                {% if mailing.buttons %}
-                    <li class="list-group-item">
-                        <div>
-                            Кнопки:
-                            {% for button in mailing.buttons %}
-                            <p>- {{ button.text }}</p>
-                            {% endfor %}
                         </div>
                     </li>
                 {% endif %}

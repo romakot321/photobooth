@@ -47,6 +47,8 @@ class Mailing(BaseMixin, Base):
     template_id: M[int] = column(ForeignKey("mailing_templates.id", ondelete="CASCADE"))
     god_mode: M[bool | None] = column(nullable=True)
     without_tariff: M[bool | None] = column(nullable=True)
+    created_from: M[dt.datetime | None] = column(nullable=True)
+    created_to: M[dt.datetime | None] = column(nullable=True)
     messages_count: M[int]
 
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
@@ -102,6 +104,7 @@ class User(Base):
     name: M[str | None] = column(nullable=True)
     gender: M[str | None] = column(nullable=True)
     tariff_id: M[int | None] = column(nullable=True)
+    created_at: M[dt.datetime]
 
     generations: M[list['Generation']] = relationship(back_populates='user', lazy='noload')
 

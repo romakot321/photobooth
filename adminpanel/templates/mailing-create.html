@@ -103,6 +103,18 @@
                         </div>
                     </div>
                 </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateCreatedFrom">Дата регистрации от</label>
+                        <input id="templateCreatedFrom" onchange="recalculateMessagesCount()" class="form-control" type="date" />
+                    </div>
+                </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateCreatedTo">Дата регистрации до</label>
+                        <input id="templateCreatedTo" onchange="recalculateMessagesCount()" class="form-control" type="date" />
+                    </div>
+                </l1>
                 <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">{{ messages_count }}</mark></l1>
             </ul>
         </div>
@@ -121,6 +133,8 @@ function createMailing(event) {
     const withoutTariffInput = document.getElementById("templateWithoutTariff");
     const textInput = document.getElementById("templateText");
     const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
+    const createdFromInput = document.getElementById("templateCreatedFrom");
+    const createdToInput = document.getElementById("templateCreatedTo");
 
     let tariffs = [];
     for (let i = 1; i <= {{ tariffs|length }}; i++) {
@@ -140,11 +154,12 @@ function createMailing(event) {
         template_id: templateId,
         god_mode: godMode,
         without_tariff: +withoutTariff,
-        images: imagesFilenames.length > 0 ? [imagesFilenames[0]] : null
+        images: imagesFilenames.length > 0 ? [imagesFilenames[0]] : null,
+        created_from: createdFromInput.value === "" ? null : createdFromInput.value,
+        created_to: createdToInput.value === "" ? null : createdToInput.value
     };
     if (mailingPaymentButtonInput.checked)
         data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
-    console.log(data);
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing", {
@@ -160,10 +175,10 @@ function createMailing(event) {
             (response) => {
                 console.log(response)
                 if (response.status != 422)
-                    window.location.href = "/admin/mailing/" + response.id;
+                    setTimeout(() => window.location.href = "/admin/mailing/" + response.id, 1500);
             }
         )
-        .catch((error) => { submitButton.innerText = "Ошибка"; console.log(error) });
+        .catch((error) => { submitButton.innerText = "Ошибка"; console.error(error) });
 }
 
 function testMailing(event) {
@@ -198,6 +213,8 @@ function recalculateMessagesCount() {
     const godModeInput = document.getElementById("templateGodmode");
     const withoutTariffInput = document.getElementById("templateWithoutTariff");
     const messageCountElement = document.getElementById("messagesCount");
+    const createdFromInput = document.getElementById("templateCreatedFrom");
+    const createdToInput = document.getElementById("templateCreatedTo");
     let data = {};
     let tariffs_param = "";
 
@@ -217,6 +234,10 @@ function recalculateMessagesCount() {
     let withoutTariff = withoutTariffInput.value === "-" ? ("{{ template.without_tariff }}" == "None" ? null : "{{ template.without_tariff }}") : withoutTariffInput.value;
     if (withoutTariff != null && withoutTariff != "")
         data["without_tariff"] = +withoutTariff;
+    if (createdFromInput.value !== "")
+        data["created_from"] = createdFromInput.value;
+    if (createdToInput.value !== "")
+        data["created_to"] = createdToInput.value;
 
     fetch("/api/mailing/messages?" + new URLSearchParams(data) + "&" + tariffs_param.replace(/^\&+|\&+$/g, ''))
         .then((resp) => resp.text())

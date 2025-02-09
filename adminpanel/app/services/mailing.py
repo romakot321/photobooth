@@ -49,7 +49,9 @@ class MailingService:
             tariff_ids=schema.tariff_ids,
             god_mode=schema.god_mode,
             without_tariff=schema.without_tariff,
-            gender=schema.gender
+            gender=schema.gender,
+            created_from=schema.created_from,
+            created_to=schema.created_to
         )
 
     async def create_and_run(self, schema: MailingCreateSchema) -> MailingSchema:

@@ -40,6 +40,8 @@ class MailingSchema(BaseModel):
     without_tariff: bool | None = None
     created_at: dt.datetime
     images: list[MailingImageSchema] | None = None
+    created_from: dt.datetime | None = None
+    created_to: dt.datetime | None = None
 
     @computed_field
     @property
@@ -63,6 +65,20 @@ class MailingSchema(BaseModel):
     def created_at_display(self) -> str:
         return self.created_at.strftime("%d %B %Y года в %H:%M")
 
+    @computed_field
+    @property
+    def created_from_display(self) -> str:
+        if self.created_from is None:
+            return ''
+        return self.created_from.strftime("%d %M %Y")
+
+    @computed_field
+    @property
+    def created_to_display(self) -> str:
+        if self.created_to is None:
+            return ''
+        return self.created_to.strftime("%d %M %Y")
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -75,6 +91,8 @@ class MailingCreateSchema(BaseModel):
     without_tariff: bool | None = None
     buttons: list[MailingButtonSchema] | None = None
     images: list[str] | None = None
+    created_from: dt.datetime | None = None
+    created_to: dt.datetime | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -112,4 +130,6 @@ class MailingMessagesCountSchema(BaseModel):
     tariff_ids: list[int] | None = None
     god_mode: bool | None = None
     without_tariff: bool | None = None
+    created_from: dt.datetime | None = None
+    created_to: dt.datetime | None = None
 

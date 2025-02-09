@@ -3,6 +3,7 @@ from sqlalchemy_service import BaseService as BaseRepository
 from sqlalchemy_service.base_db.base import Base as BaseTable
 from sqlalchemy_service.base_db.base import get_session
 from sqlalchemy import not_, or_
+import datetime as dt
 
 from typing import TypedDict, Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,7 +42,15 @@ class UserRepository[Table: User, int](BaseRepository):
         self.response.status_code = 201
         return await self.get(model.id)
 
-    async def list(self, gender=None, without_tariff: bool = None, tariff_ids: list[int] = None, god_mode: bool = None) -> list[User]:
+    async def list(
+            self,
+            gender=None,
+            without_tariff: bool = None,
+            tariff_ids: list[int] = None,
+            god_mode: bool = None,
+            created_from: dt.datetime | None = None,
+            created_to: dt.datetime | None = None
+    ) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
             query = query.filter_by(gender=gender)
@@ -57,6 +66,10 @@ class UserRepository[Table: User, int](BaseRepository):
                 query = query.filter(User.generations.any(Generation.is_god_mode == True))
             else:
                 query = query.filter(not_(User.generations.any(Generation.is_god_mode == True)))
+        if created_from is not None:
+            query = query.filter(User.created_at >= created_from)
+        if created_to is not None:
+            query = query.filter(User.created_at <= created_to)
         print(query)
         return list(await self.session.scalars(query))
 
