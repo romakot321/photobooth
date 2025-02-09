@@ -24,7 +24,7 @@
                     <img src="" alt="" class="mt-1">
                 </div>
                 <div class="card-text">
-                    <label for="templateText" class="form-label">Текст(До 4096 символов)</label>
+                    <label for="templateText" class="form-label">Текст(До 4096 символов, с картинкой до 1024 символов)</label>
                     <textarea maxlength="4096" class="form-control col-sm-10" id="templateText" rows="10">{{ template.text }}</textarea>
                 </div>
             </div>
@@ -209,13 +209,13 @@ function recalculateMessagesCount() {
     if (tariffs)
         tariffs.forEach(el => tariffs_param += "tariff_ids=" + el + "&");
     let gender = genderInput.value === "-" ? ("{{ template.gender }}" == "None" ? null : "{{ template.gender }}") : genderInput.value;
-    if (gender != null)
+    if (gender != null && gender != "")
         data["gender"] = gender;
     let godMode = godModeInput.value === "-" ? ("{{ template.god_mode }}" == "None" ? null : "{{ template.god_mode }}") : godModeInput.value;
-    if (godMode != null)
+    if (godMode != null && godMode != "")
         data["god_mode"] = godMode;
     let withoutTariff = withoutTariffInput.value === "-" ? ("{{ template.without_tariff }}" == "None" ? null : "{{ template.without_tariff }}") : withoutTariffInput.value;
-    if (withoutTariff != null)
+    if (withoutTariff != null && withoutTariff != "")
         data["without_tariff"] = +withoutTariff;
 
     fetch("/api/mailing/messages?" + new URLSearchParams(data) + "&" + tariffs_param.replace(/^\&+|\&+$/g, ''))
