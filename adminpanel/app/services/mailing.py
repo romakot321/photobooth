@@ -3,7 +3,7 @@ from loguru import logger
 from starlette import middleware
 
 from app.repositories.user import UserRepository
-from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSchema
+from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSchema, MailingSendedChatIds
 from app.schemas.mailing import MailingSearchSchema
 from app.schemas.mailing import MailingCreateSchema
 from app.schemas.mailing import MailingUpdateSchema
@@ -110,4 +110,12 @@ class MailingService:
             messages_sent=await self.bot_repository.get_mailing_messages_count(mailing_id),
             messages_count=mailing.messages_count
         )
+
+    async def get_mailing_sended_chat_ids(self, mailing_id: int) -> MailingSendedChatIds:
+        return MailingSendedChatIds(
+            chat_ids=await self.bot_repository.get_mailing_sended_chat_ids(mailing_id)
+        )
+
+    async def pause_sending(self, mailing_id: int, value: bool):
+        await self.bot_repository.pause_mailing_sending(mailing_id, value)
 

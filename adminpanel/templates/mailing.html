@@ -3,7 +3,9 @@
 {% block actions %}
 <div class="d-grid gap-2">
     <!-- <button type="button" class="btn text-nowrap btn-primary">Запустить</button> --!>
-    <!-- <button type="button" class="btn text-nowrap btn-primary">Остановить</button> --!>
+    {% if mailing_progress.messages_sent != 0 and mailing_progress.messages_sent < mailing_progress.messages_count %}
+        <button onclick="pauseMailing(event)" type="button" class="btn text-nowrap btn-primary">Остановить</button>
+    {% endif %}
     <button onclick="deleteMailing(event)" type="button" class="btn text-nowrap btn-danger">Удалить</button>
 </div>
 {% endblock %}
@@ -73,6 +75,14 @@
                             ></div>
                         </div>
                     </li>
+                    <li class="list-group-item">
+                        Айди чатов, которым отправлены сообщения:
+                        <ul class="list-group" style="max-height: 300px; overflow:scroll; -webkit-overflow-scrolling: touch;">
+                            {% for chat_id in chat_ids %}
+                                <li class="list-group-item">{{ chat_id }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                 {% endif %}
             </ul>
         </div>
@@ -80,6 +90,7 @@
 </div>
 
 <script>
+    var pauseValue = 1;
 
     function deleteMailing(event) {
         let button = event.target;
@@ -93,6 +104,26 @@
             fetch(request).then(
                 (response) => {
                     window.location.href = "/admin/mailing";
+                },
+                (error) => {
+                    button.innerText = "Ошибка";
+                }
+            );
+        }
+    }
+
+    function pauseMailing(event) {
+        let button = event.target;
+        if (button.innerText === "Остановить" || button.innerText == "Возобновить") {
+            button.innerText = "Подтверждаете " + (pauseValue == 1 ? "остановку?" : "возобновление?");
+        } else {
+            let request = new Request("/api/mailing/" + {{ mailing.id }} + "/pause?value=" + pauseValue, {
+                method: 'POST'
+            });
+            fetch(request).then(
+                (response) => {
+                    pauseValue = (pauseValue + 1) % 2;
+                    button.innerText = (pauseValue == 0 ? "Возобновить" : "Остановить");
                 },
                 (error) => {
                     button.innerText = "Ошибка";

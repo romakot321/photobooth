@@ -69,3 +69,11 @@ class BotController:
     async def get_mailing_messages_count(cls, mailing_id: int) -> int:
         return await MailingService.get_mailing_messages_sent(mailing_id)
 
+    @classmethod
+    async def get_mailing_sended_chat_ids(cls, mailing_id: int) -> list[int]:
+        return await MailingService.get_mailing_sended_chat_ids(mailing_id)
+
+    @classmethod
+    async def pause_mailing_sending(cls, mailing_id: int, value: bool):
+        await MailingService.pause_sending(mailing_id, value)
+

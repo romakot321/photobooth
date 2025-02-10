@@ -133,3 +133,7 @@ class MailingMessagesCountSchema(BaseModel):
     created_from: dt.datetime | None = None
     created_to: dt.datetime | None = None
 
+
+class MailingSendedChatIds(BaseModel):
+    chat_ids: list[int]
+

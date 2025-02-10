@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from api.services.mailing import MailingService
@@ -41,3 +41,20 @@ async def get_mailing_messages_count(
         service: MailingService = Depends()
 ) -> int:
     return await service.get_mailing_messages_count(mailing_id)
+
+
+@router.get("/{mailing_id}/chats")
+async def get_mailing_sended_chat_ids(
+        mailing_id: int,
+        service: MailingService = Depends()
+) -> list[int]:
+    return await service.get_mailing_sended_chat_ids(mailing_id)
+
+
+@router.post("/{mailing_id}/pause")
+async def pause_mailing_sending(
+        mailing_id: int,
+        value: bool = Query(),
+        service: MailingService = Depends()
+):
+    await service.pause_mailing_sending(mailing_id, value)

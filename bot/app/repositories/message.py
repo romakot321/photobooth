@@ -52,7 +52,7 @@ class _Sender:
         for chat_id in chat_ids:
             if chat_id is None:
                 continue
-            await asyncio.sleep(0.034)
+            await asyncio.sleep(0.06)
             await self._send_message(int(chat_id), text, keyboard, image_path)
         self.is_locked = False
 
@@ -65,7 +65,9 @@ class _MailingHandler:
         self.users = users
         self.sender = sender
         self.message_count = 0
+        self.sended_chat_ids = []
         self.is_finished = False
+        self.pause = False
 
     def _get_image_path(self) -> str | None:
         if not self.mailing.images:
@@ -76,8 +78,11 @@ class _MailingHandler:
         text = self.mailing.text or ('' if self.mailing.template is None else self.mailing.template.text)
 
         for i in range(0, len(self.users), 5):
+            while self.pause:
+                await asyncio.sleep(1)
             chat_ids = [u.chat_id for u in self.users[i:i + 5]]
             await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path())
+            self.sended_chat_ids += chat_ids
             self.message_count += len(chat_ids)
         self.is_finished = True
 
@@ -126,4 +131,18 @@ def get_mailing_messages_count(mailing_id: int) -> int | None:
         if handler.mailing.id == mailing_id:
             return handler.message_count
     return None
+
+
+def get_sended_chat_ids(mailing_id: int) -> list[int] | None:
+    for handler in handlers:
+        if handler.mailing.id == mailing_id:
+            return handler.sended_chat_ids
+    return None
+
+
+def set_mailing_pause(mailing_id: int, value: bool):
+    for handler in handlers:
+        if handler.mailing.id == mailing_id:
+            handler.pause = value
+            break
 

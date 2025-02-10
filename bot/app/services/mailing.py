@@ -9,7 +9,8 @@ import app
 from app.repositories.mailing import MailingRepository
 from app.repositories.mailing_template import MailingTemplateRepository
 from app.repositories.user import UserRepository
-from app.repositories.message import create_mailing_handler, create_test_handler, get_mailing_messages_count
+from app.repositories.message import create_mailing_handler, create_test_handler, get_mailing_messages_count, get_sended_chat_ids
+from app.repositories.message import set_mailing_pause
 from app.schemas.action import MailingData
 from app.schemas.mailing import MailingTestData
 from db.tables import Mailing, User
@@ -58,6 +59,15 @@ class MailingService:
     async def get_mailing_messages_sent(cls, mailing_id) -> int:
         count = get_mailing_messages_count(mailing_id)
         return count or 0
+
+    @classmethod
+    async def get_mailing_sended_chat_ids(cls, mailing_id) -> list[int]:
+        chat_ids = get_sended_chat_ids(mailing_id)
+        return chat_ids or []
+
+    @classmethod
+    async def pause_sending(cls, mailing_id: int, value: bool):
+        set_mailing_pause(mailing_id, value)
 
     @classmethod
     async def test_mailing(cls, data: MailingTestData):
