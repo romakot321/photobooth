@@ -3,6 +3,7 @@ from sqlalchemy_service.base_db.base import Base as BaseTable
 from sqlalchemy_service.base_db.base import get_session
 from sqlalchemy import not_, or_, func, select
 import datetime as dt
+import math
 
 from app.db.tables import Generation, User
 
@@ -32,7 +33,9 @@ class UserRepository[Table: User, int](BaseRepository):
             tariff_ids: list[int] | None = None,
             god_mode: bool | None = None,
             created_from: dt.datetime | None = None,
-            created_to: dt.datetime | None = None
+            created_to: dt.datetime | None = None,
+            limit: int | None = None,
+            offset: int | None = None
     ) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
@@ -53,6 +56,11 @@ class UserRepository[Table: User, int](BaseRepository):
             query = query.filter(User.created_at >= created_from)
         if created_to is not None:
             query = query.filter(User.created_at <= created_to)
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.limit(18446744073709551615).offset(offset)
+        query = query.order_by(User.id)
         return list(await self.session.scalars(query))
 
     async def count(
@@ -62,7 +70,9 @@ class UserRepository[Table: User, int](BaseRepository):
             tariff_ids=None,
             god_mode: bool | None = None,
             created_from: dt.datetime | None = None,
-            created_to: dt.datetime | None = None
+            created_to: dt.datetime | None = None,
+            limit: int | None = None,
+            offset: int | None = None
     ) -> int:
         query = select(func.count("*")).select_from(User)
         if gender is not None:
@@ -83,5 +93,13 @@ class UserRepository[Table: User, int](BaseRepository):
             query = query.filter(User.created_at >= created_from)
         if created_to is not None:
             query = query.filter(User.created_at <= created_to)
-        return await self.session.scalar(query)
+        if limit is not None:
+            query = query.limit(limit)
+        else:
+            limit = math.inf
+        if offset is None:
+            offset = 0
+        query = query.order_by(User.id)
+        result = await self.session.scalar(query)
+        return min(limit, max(result - offset, 0))
 

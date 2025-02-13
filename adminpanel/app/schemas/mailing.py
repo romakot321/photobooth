@@ -42,6 +42,8 @@ class MailingSchema(BaseModel):
     images: list[MailingImageSchema] | None = None
     created_from: dt.datetime | None = None
     created_to: dt.datetime | None = None
+    limit_messages: int | None = None
+    offset_messages: int | None = None
 
     @computed_field
     @property
@@ -93,6 +95,8 @@ class MailingCreateSchema(BaseModel):
     images: list[str] | None = None
     created_from: dt.datetime | None = None
     created_to: dt.datetime | None = None
+    limit_messages: int | None = None
+    offset_messages: int | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -132,6 +136,8 @@ class MailingMessagesCountSchema(BaseModel):
     without_tariff: bool | None = None
     created_from: dt.datetime | None = None
     created_to: dt.datetime | None = None
+    limit_messages: int | None = None
+    offset_messages: int | None = None
 
 
 class MailingSendedChatIds(BaseModel):

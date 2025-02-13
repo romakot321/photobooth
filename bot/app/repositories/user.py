@@ -49,7 +49,9 @@ class UserRepository[Table: User, int](BaseRepository):
             tariff_ids: list[int] = None,
             god_mode: bool = None,
             created_from: dt.datetime | None = None,
-            created_to: dt.datetime | None = None
+            created_to: dt.datetime | None = None,
+            limit: int | None = None,
+            offset: int | None = None
     ) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
@@ -70,6 +72,13 @@ class UserRepository[Table: User, int](BaseRepository):
             query = query.filter(User.created_at >= created_from)
         if created_to is not None:
             query = query.filter(User.created_at <= created_to)
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+            if limit is None:
+                query = query.limit(18446744073709551615)
+        query = query.order_by(User.id)
         print(query)
         return list(await self.session.scalars(query))
 

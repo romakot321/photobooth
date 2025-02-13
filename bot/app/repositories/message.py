@@ -77,10 +77,10 @@ class _MailingHandler:
     async def start(self):
         text = self.mailing.text or ('' if self.mailing.template is None else self.mailing.template.text)
 
-        for i in range(0, len(self.users), 5):
+        for i in range(0, len(self.users), 1):
             while self.pause:
                 await asyncio.sleep(1)
-            chat_ids = [u.chat_id for u in self.users[i:i + 5]]
+            chat_ids = [u.chat_id for u in self.users[i:i + 1]]
             await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path())
             self.sended_chat_ids += chat_ids
             self.message_count += len(chat_ids)

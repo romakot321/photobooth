@@ -115,6 +115,18 @@
                         <input id="templateCreatedTo" onchange="recalculateMessagesCount()" class="form-control" type="date" />
                     </div>
                 </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateLimit">Максимальное количество пользователей</label>
+                        <input id="templateLimit" onchange="recalculateMessagesCount()" class="form-control" type="text" />
+                    </div>
+                </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateOffset">Начиная с пользователя, под номером</label>
+                        <input id="templateOffset" onchange="recalculateMessagesCount()" class="form-control" type="text" />
+                    </div>
+                </l1>
                 <li class="list-group-item">Будет разослано сообщений: <mark id="messagesCount">{{ messages_count }}</mark></l1>
             </ul>
         </div>
@@ -135,6 +147,8 @@ function createMailing(event) {
     const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
     const createdFromInput = document.getElementById("templateCreatedFrom");
     const createdToInput = document.getElementById("templateCreatedTo");
+    const limitInput = document.getElementById("templateLimit");
+    const offsetInput = document.getElementById("templateOffset");
 
     let tariffs = [];
     for (let i = 1; i <= {{ tariffs|length }}; i++) {
@@ -145,6 +159,8 @@ function createMailing(event) {
     let godMode = godmodeInput.value === "-" || godmodeInput.value === "{{ template.god_mode }}" ? null : godmodeInput.value;
     let withoutTariff = withoutTariffInput.value === "-" || withoutTariffInput.value === "{{ template.without_tariff }}" ? null : withoutTariffInput.value;
     let text = textInput.value === "" || textInput.value === "{{ template.text }}" ? null : textInput.value;
+    let limit = limitInput === "" ? null : +limitInput.value;
+    let offset = offsetInput === "" ? null : +offsetInput.value;
     let templateId = {{ template.id|default(0) }} === 0 ? null : {{ template.id|default(0) }};
 
     let data = {
@@ -156,7 +172,9 @@ function createMailing(event) {
         without_tariff: +withoutTariff,
         images: imagesFilenames.length > 0 ? [imagesFilenames[0]] : null,
         created_from: createdFromInput.value === "" ? null : createdFromInput.value,
-        created_to: createdToInput.value === "" ? null : createdToInput.value
+        created_to: createdToInput.value === "" ? null : createdToInput.value,
+        limit_messages: limit,
+        offset_messages: offset
     };
     if (mailingPaymentButtonInput.checked)
         data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
@@ -215,6 +233,8 @@ function recalculateMessagesCount() {
     const messageCountElement = document.getElementById("messagesCount");
     const createdFromInput = document.getElementById("templateCreatedFrom");
     const createdToInput = document.getElementById("templateCreatedTo");
+    const limitInput = document.getElementById("templateLimit");
+    const offsetInput = document.getElementById("templateOffset");
     let data = {};
     let tariffs_param = "";
 
@@ -238,6 +258,10 @@ function recalculateMessagesCount() {
         data["created_from"] = createdFromInput.value;
     if (createdToInput.value !== "")
         data["created_to"] = createdToInput.value;
+    if (limitInput.value !== "")
+        data["limit_messages"] = +limitInput.value;
+    if (offsetInput.value !== "")
+        data["offset_messages"] = +offsetInput.value;
 
     fetch("/api/mailing/messages?" + new URLSearchParams(data) + "&" + tariffs_param.replace(/^\&+|\&+$/g, ''))
         .then((resp) => resp.text())

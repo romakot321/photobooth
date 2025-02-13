@@ -35,7 +35,7 @@ class MailingService:
         return cls(mailing_repository, user_repository, template_repository)
 
     async def handle_start_mailing(self, data: MailingData, query: CallbackQuery, bot: Bot):
-        mailing = await self.mailing_repository.get(data.mailing_id)
+        mailing: Mailing = await self.mailing_repository.get(data.mailing_id)
         tariff_ids = []
         if mailing.tariffs:
             tariff_ids = [t.id for t in mailing.tariffs]
@@ -49,6 +49,8 @@ class MailingService:
             gender=mailing.gender or (None if mailing.template is None else mailing.template.gender),
             created_from=mailing.created_from,
             created_to=mailing.created_to,
+            limit=mailing.limit_messages,
+            offset=mailing.offset_messages
         )
         logger.debug(f"Starting mailing({mailing.id=}) for {len(users)} users")
 

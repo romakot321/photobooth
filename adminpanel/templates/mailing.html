@@ -48,6 +48,8 @@
                 </l1>
                 <li class="list-group-item">Дата регистрации от: {{ mailing.created_from_display }}</l1>
                 <li class="list-group-item">Дата регистрации до: {{ mailing.created_to_display }}</l1>
+                <li class="list-group-item">Максимальное количество пользователей: {{ mailing.limit_messages }}</l1>
+                <li class="list-group-item">Начиная с пользователя под номером: {{ mailing.offset_messages }}</l1>
 
                 {% if mailing.buttons %}
                     <li class="list-group-item">
@@ -64,6 +66,7 @@
                     <li class="list-group-item">Сообщений разослано: {{ mailing_progress.messages_count }}</l1>
                 {% else %}
                     <li class="list-group-item">
+                        {{ mailing_progress.messages_sent }} / {{ mailing_progress.messages_count }} сообщений
                         <div class="progress">
                             <div
                                 class="progress-bar progress-bar-striped"

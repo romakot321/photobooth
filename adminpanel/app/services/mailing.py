@@ -51,7 +51,9 @@ class MailingService:
             without_tariff=schema.without_tariff,
             gender=schema.gender,
             created_from=schema.created_from,
-            created_to=schema.created_to
+            created_to=schema.created_to,
+            limit=schema.limit_messages,
+            offset=schema.offset_messages
         )
 
     async def create_and_run(self, schema: MailingCreateSchema) -> MailingSchema:

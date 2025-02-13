@@ -50,6 +50,8 @@ class Mailing(BaseMixin, Base):
     without_tariff: M[bool | None] = column(nullable=True)
     created_from: M[dt.datetime | None] = column(nullable=True)
     created_to: M[dt.datetime | None] = column(nullable=True)
+    limit_messages: M[int | None] = column(nullable=True)
+    offset_messages: M[int | None] = column(nullable=True)
 
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
     tariffs: M[list['Tariff']] = relationship(secondary="mailings_tariffs", back_populates="mailings", lazy="selectin")
