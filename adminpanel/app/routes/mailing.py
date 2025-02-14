@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 
 from app.services.mailing import MailingService
-from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSearchSchema, MailingSendedChatIds, MailingUpdateSchema
+from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSearchSchema, MailingSendedUserIds, MailingUpdateSchema
 from app.schemas.mailing import MailingSchema, MailingCreateSchema
 from app.schemas.mailing import MailingTestSchema
 
@@ -84,12 +84,12 @@ async def get_mailing_progress(
     return await service.get_mailing_progress(mailing_id)
 
 
-@router.get("/{mailing_id}/chats", response_model=MailingSendedChatIds)
-async def get_mailing_sended_chat_ids(
+@router.get("/{mailing_id}/chats", response_model=MailingSendedUserIds)
+async def get_mailing_sended_user_ids(
         mailing_id: int,
         service: MailingService = Depends()
 ):
-    return await service.get_mailing_sended_chat_ids(mailing_id)
+    return await service.get_mailing_sended_user_ids(mailing_id)
 
 
 @router.post("/{mailing_id}/pause", status_code=200)

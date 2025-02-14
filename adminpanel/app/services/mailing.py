@@ -3,7 +3,7 @@ from loguru import logger
 from starlette import middleware
 
 from app.repositories.user import UserRepository
-from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSchema, MailingSendedChatIds
+from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSchema, MailingSendedUserIds
 from app.schemas.mailing import MailingSearchSchema
 from app.schemas.mailing import MailingCreateSchema
 from app.schemas.mailing import MailingUpdateSchema
@@ -15,6 +15,7 @@ from app.repositories.bot import BotRepository
 from app.repositories.tariff import TariffRepository
 from app.repositories.image import ImageRepository
 from app.repositories.storage import StorageRepository
+from app.repositories.redis import RedisRepository
 
 
 class MailingService:
@@ -26,7 +27,8 @@ class MailingService:
             button_repository: MailingButtonRepository = Depends(),
             image_repository: ImageRepository = Depends(),
             storage_repository: StorageRepository = Depends(),
-            user_repository: UserRepository = Depends()
+            user_repository: UserRepository = Depends(),
+            redis_repository: RedisRepository = Depends()
     ):
         self.mailing_repository = mailing_repository
         self.bot_repository = bot_repository
@@ -35,9 +37,13 @@ class MailingService:
         self.image_repository = image_repository
         self.storage_repository = storage_repository
         self.user_repository = user_repository
+        self.redis_repository = redis_repository
 
-    async def list(self, schema: MailingSearchSchema = None) -> list[MailingSchema]:
-        models = await self.mailing_repository.list(**schema.model_dump(exclude_none=True))
+    async def list(self, schema: MailingSearchSchema | None = None) -> list[MailingSchema]:
+        filters = {}
+        if schema:
+            filters = schema.model_dump(exclude_none=True)
+        models = await self.mailing_repository.list(**filters)
         return [MailingSchema.model_validate(model) for model in models]
 
     async def get(self, mailing_id: int) -> MailingSchema:
@@ -93,6 +99,7 @@ class MailingService:
 
     async def delete(self, model_id: int):
         await self.mailing_repository.delete(model_id)
+        await self.redis_repository.delete_mailing(model_id)
 
     async def test(self, schema: MailingTestSchema):
         buttons = [i.model_dump() for i in schema.buttons] if schema.buttons else None
@@ -109,13 +116,14 @@ class MailingService:
         mailing = await self.mailing_repository.get(mailing_id)
         return MailingProgressSchema(
             id=mailing_id,
-            messages_sent=await self.bot_repository.get_mailing_messages_count(mailing_id),
-            messages_count=mailing.messages_count
+            messages_sent=await self.redis_repository.get_mailing_sended_count(mailing_id),
+            messages_count=mailing.messages_count,
+            status=await self.redis_repository.get_mailing_status(mailing_id)
         )
 
-    async def get_mailing_sended_chat_ids(self, mailing_id: int) -> MailingSendedChatIds:
-        return MailingSendedChatIds(
-            chat_ids=await self.bot_repository.get_mailing_sended_chat_ids(mailing_id)
+    async def get_mailing_sended_user_ids(self, mailing_id: int) -> MailingSendedUserIds:
+        return MailingSendedUserIds(
+            user_ids=await self.redis_repository.get_mailing_user_ids(mailing_id)
         )
 
     async def pause_sending(self, mailing_id: int, value: bool):

@@ -100,6 +100,7 @@ class UserRepository[Table: User, int](BaseRepository):
         if offset is None:
             offset = 0
         query = query.order_by(User.id)
+        print(query, limit)
         result = await self.session.scalar(query)
         return min(limit, max(result - offset, 0))
 

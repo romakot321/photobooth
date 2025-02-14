@@ -68,6 +68,8 @@ async def mailing_details_page(
 ):
     mailing: MailingSchema = await mailing_service.get(mailing_id)
     progress = await mailing_service.get_mailing_progress(mailing_id)
-    sended_chat_ids = await mailing_service.get_mailing_sended_chat_ids(mailing_id)
-    return templates.TemplateResponse("mailing.html", {"request": request, "mailing": mailing, "mailing_progress": progress, "chat_ids": sended_chat_ids.chat_ids})
+    sended_chat_ids = await mailing_service.get_mailing_sended_user_ids(mailing_id)
+    return templates.TemplateResponse(
+        "mailing.html", {"request": request, "mailing": mailing, "mailing_progress": progress, "chat_ids": sended_chat_ids.user_ids}
+    )
 

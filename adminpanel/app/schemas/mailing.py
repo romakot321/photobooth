@@ -127,6 +127,7 @@ class MailingProgressSchema(BaseModel):
     id: int
     messages_sent: int | None = None
     messages_count: int
+    status: str | None = None
 
 
 class MailingMessagesCountSchema(BaseModel):
@@ -140,6 +141,6 @@ class MailingMessagesCountSchema(BaseModel):
     offset_messages: int | None = None
 
 
-class MailingSendedChatIds(BaseModel):
-    chat_ids: list[int]
+class MailingSendedUserIds(BaseModel):
+    user_ids: list[int]
 

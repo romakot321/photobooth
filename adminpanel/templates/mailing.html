@@ -3,8 +3,10 @@
 {% block actions %}
 <div class="d-grid gap-2">
     <!-- <button type="button" class="btn text-nowrap btn-primary">Запустить</button> --!>
-    {% if mailing_progress.messages_sent != 0 and mailing_progress.messages_sent < mailing_progress.messages_count %}
+    {% if mailing_progress.status == "running" %}
         <button onclick="pauseMailing(event)" type="button" class="btn text-nowrap btn-primary">Остановить</button>
+    {% elif mailing_progress.status == "pause" %}
+        <button onclick="pauseMailing(event)" type="button" class="btn text-nowrap btn-primary">Возобновить</button>
     {% endif %}
     <button onclick="deleteMailing(event)" type="button" class="btn text-nowrap btn-danger">Удалить</button>
 </div>
@@ -62,8 +64,8 @@
                     </li>
                 {% endif %}
 
-                {% if mailing_progress.messages_sent == 0 or mailing_progress.messages_sent == mailing_progress.messages_count %}
-                    <li class="list-group-item">Сообщений разослано: {{ mailing_progress.messages_count }}</l1>
+                {% if mailing_progress.status is none or mailing_progress.status == "finished" %}
+                    <li class="list-group-item">Сообщений было запланировано: {{ mailing_progress.messages_count }}, разослано: {{ chat_ids|length }}</l1>
                 {% else %}
                     <li class="list-group-item">
                         {{ mailing_progress.messages_sent }} / {{ mailing_progress.messages_count }} сообщений
@@ -78,22 +80,26 @@
                             ></div>
                         </div>
                     </li>
-                    <li class="list-group-item">
-                        Айди чатов, которым отправлены сообщения:
-                        <ul class="list-group" style="max-height: 300px; overflow:scroll; -webkit-overflow-scrolling: touch;">
-                            {% for chat_id in chat_ids %}
-                                <li class="list-group-item">{{ chat_id }}</li>
-                            {% endfor %}
-                        </ul>
-                    </li>
                 {% endif %}
+                <li class="list-group-item">
+                    ID пользователей, которым отправлены сообщения:
+                    <ul class="list-group" style="max-height: 300px; overflow:scroll; -webkit-overflow-scrolling: touch;">
+                        {% for chat_id in chat_ids %}
+                            <li class="list-group-item">{{ chat_id }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
             </ul>
         </div>
     </div>
 </div>
 
 <script>
-    var pauseValue = 1;
+    {% if mailing_progress.status == "running" %}
+        var pauseValue = 1;
+    {% else %}
+        var pauseValue = 0;
+    {% endif %}
 
     function deleteMailing(event) {
         let button = event.target;

@@ -2,7 +2,7 @@
 
 {% block actions %}
 <div class="d-grid gap-2">
-    <button type="button" onclick="createMailing(event)" class="btn text-nowrap btn-primary">Сохранить и запустить</button>
+    <button type="button" onclick="createMailing(event)" class="btn text-nowrap btn-primary">Запустить для всех пользователей</button>
     <div class="d-flex mb-3">
         <input id="chatid-input" class="form-control me-2" type="number" placeholder="Chat id" aria-label="Текст" name="chatId">
         <button type="button" onclick="testMailing(event)" class="btn text-nowrap btn-primary">Отправить себе</button>
@@ -98,8 +98,10 @@
                             <input class="form-check-input"
                                 type="checkbox"
                                 value="1"
-                                id="mailingPaymentButtonCheckbox">
+                                id="mailingPaymentButtonCheckbox"
+                                onchange="setCommandInputDisplay(event);">
                             <label class="form-check-label" for="mailingPaymentButtonCheckbox">Добавить кнопку оплаты</label>
+                            <input id="mailingPaymentCommand" class="form-control" type="text" style="display: none;" value="/offer1390" />
                         </div>
                     </div>
                 </l1>
@@ -138,6 +140,16 @@
 
 var imagesFilenames = [];
 
+function setCommandInputDisplay(event) {
+    const checkbox = event.target;
+    const commandInput = document.getElementById("mailingPaymentCommand");
+
+    if (checkbox.checked)
+        commandInput.style.display = "block";
+    else
+        commandInput.style.display = "none";
+}
+
 function createMailing(event) {
     const submitButton = event.target;
     const genderInput = document.getElementById("templateGender");
@@ -149,6 +161,7 @@ function createMailing(event) {
     const createdToInput = document.getElementById("templateCreatedTo");
     const limitInput = document.getElementById("templateLimit");
     const offsetInput = document.getElementById("templateOffset");
+    const commandInput = document.getElementById("mailingPaymentCommand");
 
     let tariffs = [];
     for (let i = 1; i <= {{ tariffs|length }}; i++) {
@@ -173,11 +186,12 @@ function createMailing(event) {
         images: imagesFilenames.length > 0 ? [imagesFilenames[0]] : null,
         created_from: createdFromInput.value === "" ? null : createdFromInput.value,
         created_to: createdToInput.value === "" ? null : createdToInput.value,
-        limit_messages: limit,
-        offset_messages: offset
+        limit_messages: limit === 0 ? null : limit,
+        offset_messages: offset === 0 ? null : offset
     };
     if (mailingPaymentButtonInput.checked)
-        data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
+        data["buttons"] = [{text: "Оплатить", "callback_data": commandInput.value}];
+    console.log(data);
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing", {
