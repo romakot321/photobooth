@@ -21,3 +21,12 @@ services:
     networks:
       default:
 
+  redis:
+    image: redis:alpine
+    container_name: photobooth_adminpanel_redis
+    restart: always
+    networks:
+      default:
+    ports:
+      - "6379:6379"
+
