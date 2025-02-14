@@ -17,6 +17,7 @@ from loguru import logger
 
 import app
 from app import handlers
+from app.services.mailing import MailingService
 
 
 BOT_ID = 'mailing_bot'
@@ -98,6 +99,7 @@ def setup_bot(application: FastAPI):
 
     app.bot_instance = bot
     app.dispatcher_instance = dispatcher
+    asyncio.create_task(MailingService.restore_mailings())
     return
 
     if BOT_WEBHOOK_URL:

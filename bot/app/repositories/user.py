@@ -51,7 +51,8 @@ class UserRepository[Table: User, int](BaseRepository):
             created_from: dt.datetime | None = None,
             created_to: dt.datetime | None = None,
             limit: int | None = None,
-            offset: int | None = None
+            offset: int | None = None,
+            from_user_id: int | None = None
     ) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
@@ -78,6 +79,8 @@ class UserRepository[Table: User, int](BaseRepository):
             query = query.offset(offset)
             if limit is None:
                 query = query.limit(18446744073709551615)
+        if from_user_id is not None:
+            query = query.filter(User.id > from_user_id)
         query = query.order_by(User.id)
         print(query)
         return list(await self.session.scalars(query))
