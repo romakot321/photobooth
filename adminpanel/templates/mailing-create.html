@@ -223,6 +223,7 @@ function testMailing(event) {
     const chatIdInput = document.getElementById("chatid-input");
     const textInput = document.getElementById("templateText");
     const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
+    const commandInput = document.getElementById("mailingPaymentCommand");
 
     let text = textInput.value === "" ? "{{ template.text }}" : textInput.value;
     let data = {
@@ -231,9 +232,8 @@ function testMailing(event) {
         image_filename: imagesFilenames.length > 0 ? imagesFilenames[0] : null,
         video_filename: videosFilenames.length > 0 ? videosFilenames[0] : null
     };
-    console.log(data);
     if (mailingPaymentButtonInput.checked)
-        data["buttons"] = [{text: "Оплатить", "callback_data": "/specialOffer390"}];
+        data["buttons"] = [{text: "Оплатить", "callback_data": commandInput.value}];
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing/test", {
