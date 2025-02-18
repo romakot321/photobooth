@@ -103,11 +103,11 @@ class MailingService:
 
     async def test(self, schema: MailingTestSchema):
         buttons = [i.model_dump() for i in schema.buttons] if schema.buttons else None
-        await self.bot_repository.trigger_mailing_test(schema.chat_id, schema.text, buttons, schema.image_filename)
+        await self.bot_repository.trigger_mailing_test(schema.chat_id, schema.text, buttons, schema.image_filename, schema.video_filename)
 
     async def store_image(self, file: UploadFile) -> MailingImageSchema:
         filename = self.storage_repository.generate_image_filename()
-        model = MailingImage(filename=filename)
+        model = MailingImage(filename=filename, is_video=file.content_type.startswith("video/"))
         self.storage_repository.store_image(filename, file.file.read())
         model = await self.image_repository.create(model)
         return MailingImageSchema.model_validate(model)

@@ -17,6 +17,7 @@ class MailingTestSchema(BaseModel):
     text: str
     buttons: list[Button] | None = None
     image_filename: str | None = None
+    video_filename: str | None = None
 
 
 @router.post("/test")

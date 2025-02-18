@@ -23,6 +23,7 @@ class MailingButtonSchema(BaseModel):
 class MailingImageSchema(BaseModel):
     id: int
     filename: str
+    is_video: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -121,6 +122,7 @@ class MailingTestSchema(BaseModel):
     text: str
     buttons: list[MailingButtonSchema] | None = None
     image_filename: str | None = None
+    video_filename: str | None = None
 
 
 class MailingProgressSchema(BaseModel):

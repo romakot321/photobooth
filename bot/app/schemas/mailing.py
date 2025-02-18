@@ -12,3 +12,4 @@ class MailingTestData(BaseModel):
     text: str
     buttons: list[MailingButtonData] | None = None
     image_filename: str | None = None
+    video_filename: str | None = None

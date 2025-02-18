@@ -15,12 +15,14 @@ class BotRepository:
             chat_id: int,
             text: str,
             buttons: list[dict] | None = None,
-            image_filename: str | None = None
+            image_filename: str | None = None,
+            video_filename: str | None = None,
     ):
         async with aiohttp.ClientSession(base_url=self.BOT_API_URL) as session:
             resp = await session.post(
                 f"/api/mailing/test",
-                json={"chat_id": chat_id, "text": text, "buttons": buttons, "image_filename": image_filename}
+                json={"chat_id": chat_id, "text": text, "buttons": buttons, "image_filename": image_filename,
+                      "video_filename": video_filename}
             )
             assert resp.status == 200, await resp.text()
 

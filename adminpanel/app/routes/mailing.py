@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from app.services.mailing import MailingService
 from app.schemas.mailing import MailingImageSchema, MailingMessagesCountSchema, MailingProgressSchema, MailingSearchSchema, MailingSendedUserIds, MailingUpdateSchema
@@ -36,10 +36,12 @@ async def get_mailing(
 
 
 @router.post("/image", response_model=MailingImageSchema)
-async def store_mailing_image(
+async def store_mailing_file(
         file: UploadFile = File(...),
         service: MailingService = Depends()
 ):
+    if not file.content_type.startswith("video/") and not file.content_type.startswith("image/"):
+        raise HTTPException(400, detail="Invalid file type")
     return await service.store_image(file)
 
 

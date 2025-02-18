@@ -4,6 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types.input_file import FSInputFile
 import asyncio
 import os
+import re
 import pathlib
 from dataclasses import dataclass
 
@@ -35,27 +36,44 @@ class _Sender:
         )
         return keyboard
 
-    async def _send_message(self, chat_id: int, text: str, keyboard: InlineKeyboardMarkup | None, image_path: str | None):
+    def _escape_markdown(self, text: str) -> str:
+        escape_characters = [
+            '_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'
+        ]
+        for char in escape_characters:
+            text = text.replace(char, f'\\{char}')
+        return text
+
+    async def _send_message(
+            self,
+            chat_id: int,
+            text: str,
+            keyboard: InlineKeyboardMarkup | None,
+            image_path: str | None,
+            video_path: str | None
+    ):
+        # text = self._escape_markdown(text)
         try:
             if image_path is not None:
-                await self.bot.send_photo(chat_id=chat_id, caption=text, photo=FSInputFile(image_path), reply_markup=keyboard)
+                await self.bot.send_photo(chat_id=chat_id, caption=text, photo=FSInputFile(image_path), reply_markup=keyboard, parse_mode="HTML")
+            elif video_path is not None:
+                await self.bot.send_video(chat_id=chat_id, caption=text, video=FSInputFile(video_path), reply_markup=keyboard, parse_mode="HTML")
             else:
-                await self.bot.send_message(chat_id, text, reply_markup=keyboard)
+                await self.bot.send_message(chat_id, text, reply_markup=keyboard, parse_mode="HTML")
         except (aiogram.exceptions.TelegramBadRequest, aiogram.exceptions.TelegramForbiddenError) as e:
             pass
 
-    async def send(self, chat_ids: list[int | str | None], text: str, buttons: list[_Button], image_path: str | None):
+    async def send(self, chat_ids: list[int | str | None], text: str, buttons: list[_Button], image_path: str | None, video_path: str | None):
         while self.is_locked:
             await asyncio.sleep(1)
         keyboard = self._build_keyboard(buttons)
 
         self.is_locked = True
         for chat_id in chat_ids:
-            await asyncio.sleep(5)
             if chat_id is None:
                 continue
             await asyncio.sleep(0.06)
-            await self._send_message(int(chat_id), text, keyboard, image_path)
+            await self._send_message(int(chat_id), text, keyboard, image_path, video_path)
         self.is_locked = False
 
 
@@ -73,7 +91,12 @@ class _MailingHandler:
         self.db = db
 
     def _get_image_path(self) -> str | None:
-        if not self.mailing.images:
+        if not self.mailing.images or self.mailing.images[0].is_video:
+            return None
+        return str(self.storage_path / self.mailing.images[0].filename)
+
+    def _get_video_path(self) -> str | None:
+        if not self.mailing.images or not self.mailing.images[0].is_video:
             return None
         return str(self.storage_path / self.mailing.images[0].filename)
 
@@ -93,7 +116,7 @@ class _MailingHandler:
                 break
             chat_ids = [u.chat_id for u in self.users[i:i + 3]]
 
-            await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path())
+            await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path(), self._get_video_path())
             await self.db.add_mailing_user_ids(self.mailing.id, *[u.id for u in self.users[i:i + 3]])
 
             self.sended_chat_ids += chat_ids
@@ -108,23 +131,29 @@ class _MailingHandler:
 class _TestHandler:
     storage_path = pathlib.Path(os.getenv("IMAGE_STORAGE_PATH", "images"))
 
-    def __init__(self, text: str, chat_ids: list[int], image_filename: str | None, buttons: list[_Button], sender: _Sender):
+    def __init__(self, text: str, chat_ids: list[int], image_filename: str | None, video_filename: str | None, buttons: list[_Button], sender: _Sender):
         self.text = text
         self.chat_ids = chat_ids
         self.sender = sender
         self.message_count = 0
         self.buttons = buttons
         self.image_filename = image_filename
+        self.video_filename = video_filename
 
     def _get_image_path(self) -> str | None:
         if not self.image_filename:
             return None
         return str(self.storage_path / self.image_filename)
 
+    def _get_video_path(self) -> str | None:
+        if not self.video_filename:
+            return None
+        return str(self.storage_path / self.video_filename)
+
     async def start(self):
         for i in range(0, len(self.chat_ids), 5):
             chat_ids = self.chat_ids[i:i + 5]
-            await self.sender.send(chat_ids, self.text, self.buttons, self._get_image_path())
+            await self.sender.send(chat_ids, self.text, self.buttons, self._get_image_path(), self._get_video_path())
             self.message_count += len(chat_ids)
 
 
@@ -132,9 +161,9 @@ sender = _Sender()
 handlers: list[_MailingHandler] = []
 
 
-def create_test_handler(text: str, buttons: list[MailingButtonData], image_filename: str | None, *chat_ids: int) -> _TestHandler:
+def create_test_handler(text: str, buttons: list[MailingButtonData], image_filename: str | None, video_filename: str | None, *chat_ids: int) -> _TestHandler:
     global handlers, sender
-    return _TestHandler(text, chat_ids, image_filename, buttons, sender)
+    return _TestHandler(text, chat_ids, image_filename, video_filename, buttons, sender)
 
 
 def create_mailing_handler(mailing: Mailing, users: list[User]) -> _MailingHandler:

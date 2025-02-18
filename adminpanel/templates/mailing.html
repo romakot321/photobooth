@@ -20,7 +20,11 @@
                 <h5 class="card-title mb-3">{{ mailing.created_at_display }}</h5>
                 {% if mailing.images %}
                     <div class="mb-3">
-                        <img src="/static/{{ mailing.images[0].filename }}" class="image-fluid mt-1 mb-1">
+                        {% if mailing.images[0].is_video %}
+                            <video src="/static/{{ mailing.images[0].filename }}" class="image-fluid mt-1 mb-1">
+                        {% else %}
+                            <img src="/static/{{ mailing.images[0].filename }}" class="image-fluid mt-1 mb-1">
+                        {% endif %}
                     </div>
                 {% endif %}
                 <p class="card-text">{{ mailing.text_display }}</p>

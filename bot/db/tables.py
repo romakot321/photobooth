@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped as M
 from sqlalchemy.orm import mapped_column as column
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, false
 from sqlalchemy import text
 from sqlalchemy import VARCHAR
 
@@ -61,6 +61,7 @@ class Mailing(BaseMixin, Base):
 
 class MailingImage(BaseMixin, Base):
     filename: M[str]
+    is_video: M[bool] = column(server_default=false())
     mailing_id: M[int | None] = column(ForeignKey('mailings.id', ondelete="CASCADE"), nullable=True)
 
     mailing: M['Mailing'] = relationship(back_populates="images", lazy="noload")
