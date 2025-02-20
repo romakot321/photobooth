@@ -1,8 +1,8 @@
-from db.tables import Generation, User
+from db.tables import Generation, Order, User
 from sqlalchemy_service import BaseService as BaseRepository
 from sqlalchemy_service.base_db.base import Base as BaseTable
 from sqlalchemy_service.base_db.base import get_session
-from sqlalchemy import not_, or_
+from sqlalchemy import and_, not_, or_
 import datetime as dt
 
 from typing import TypedDict, Annotated
@@ -52,7 +52,8 @@ class UserRepository[Table: User, int](BaseRepository):
             created_to: dt.datetime | None = None,
             limit: int | None = None,
             offset: int | None = None,
-            from_user_id: int | None = None
+            from_user_id: int | None = None,
+            next_payment_date: dt.date | None = None
     ) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
@@ -81,6 +82,11 @@ class UserRepository[Table: User, int](BaseRepository):
                 query = query.limit(18446744073709551615)
         if from_user_id is not None:
             query = query.filter(User.id > from_user_id)
+        if next_payment_date is not None:
+            next_payment_date = next_payment_date - dt.timedelta(days=30)
+            start_datetime = dt.datetime(hour=0, minute=0, second=0, day=next_payment_date.day, month=next_payment_date.month, year=next_payment_date.year)
+            end_datetime = dt.datetime(hour=23, minute=59, second=59, day=next_payment_date.day, month=next_payment_date.month, year=next_payment_date.year)
+            query = query.filter(User.orders.any(and_(Order.system_id == 1, Order.paid_at >= start_datetime, Order.paid_at <= end_datetime)))
         query = query.order_by(User.id)
         print(query)
         return list(await self.session.scalars(query))

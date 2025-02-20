@@ -107,6 +107,19 @@
                 </l1>
                 <li class="list-group-item">
                     <div class="row mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                value="1"
+                                id="mailingLinkButtonCheckbox"
+                                onchange="setUrlInputDisplay(event);">
+                            <label class="form-check-label" for="mailingLinkButtonCheckbox">Добавить кнопку с ссылкой</label>
+                            <input id="mailingLinkButtonUrl" class="form-control" type="text" style="display: none;" value="" />
+                        </div>
+                    </div>
+                </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
                         <label class="form-label" for="templateCreatedFrom">Дата регистрации от</label>
                         <input id="templateCreatedFrom" onchange="recalculateMessagesCount()" class="form-control" type="date" />
                     </div>
@@ -115,6 +128,12 @@
                     <div class="row mb-3">
                         <label class="form-label" for="templateCreatedTo">Дата регистрации до</label>
                         <input id="templateCreatedTo" onchange="recalculateMessagesCount()" class="form-control" type="date" />
+                    </div>
+                </l1>
+                <li class="list-group-item">
+                    <div class="row mb-3">
+                        <label class="form-label" for="templateNextPayment">Дата следующего списания(cloudpayments)</label>
+                        <input id="templateNextPayment" onchange="recalculateMessagesCount()" class="form-control" type="date" />
                     </div>
                 </l1>
                 <li class="list-group-item">
@@ -151,6 +170,16 @@ function setCommandInputDisplay(event) {
         commandInput.style.display = "none";
 }
 
+function setUrlInputDisplay(event) {
+    const checkbox = event.target;
+    const urlInput = document.getElementById("mailingLinkButtonUrl");
+
+    if (checkbox.checked)
+        urlInput.style.display = "block";
+    else
+        urlInput.style.display = "none";
+}
+
 function createMailing(event) {
     const submitButton = event.target;
     const genderInput = document.getElementById("templateGender");
@@ -163,6 +192,9 @@ function createMailing(event) {
     const limitInput = document.getElementById("templateLimit");
     const offsetInput = document.getElementById("templateOffset");
     const commandInput = document.getElementById("mailingPaymentCommand");
+    const mailingUrlButtonInput = document.getElementById("mailingLinkButtonCheckbox");
+    const urlInput = document.getElementById("mailingLinkButtonUrl");
+    const nextPaymentInput = document.getElementById("templateNextPayment");
 
     let tariffs = [];
     for (let i = 1; i <= {{ tariffs|length }}; i++) {
@@ -191,11 +223,14 @@ function createMailing(event) {
         images: images.length == 0 ? null : images,
         created_from: createdFromInput.value === "" ? null : createdFromInput.value,
         created_to: createdToInput.value === "" ? null : createdToInput.value,
+        next_payment_date: nextPaymentInput.value === "" ? null : nextPaymentInput.value,
         limit_messages: limit === 0 ? null : limit,
         offset_messages: offset === 0 ? null : offset
     };
     if (mailingPaymentButtonInput.checked)
-        data["buttons"] = [{text: "Оплатить", "callback_data": commandInput.value}];
+        data["buttons"] = (data.buttons || []).concat([{text: "Оплатить", "callback_data": commandInput.value}]);
+    if (mailingUrlButtonInput.checked)
+        data["buttons"] = (data.buttons || []).concat([{text: "Перейти", "url": urlInput.value}]);
     console.log(data);
 
     submitButton.innerText = "Отправка...";
@@ -224,6 +259,8 @@ function testMailing(event) {
     const textInput = document.getElementById("templateText");
     const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
     const commandInput = document.getElementById("mailingPaymentCommand");
+    const mailingUrlButtonInput = document.getElementById("mailingLinkButtonCheckbox");
+    const urlInput = document.getElementById("mailingLinkButtonUrl");
 
     let text = textInput.value === "" ? "{{ template.text }}" : textInput.value;
     let data = {
@@ -233,7 +270,9 @@ function testMailing(event) {
         video_filename: videosFilenames.length > 0 ? videosFilenames[0] : null
     };
     if (mailingPaymentButtonInput.checked)
-        data["buttons"] = [{text: "Оплатить", "callback_data": commandInput.value}];
+        data["buttons"] = (data.buttons || []).concat([{text: "Оплатить", "callback_data": commandInput.value}]);
+    if (mailingUrlButtonInput.checked)
+        data["buttons"] = (data.buttons || []).concat([{text: "Перейти", "url": urlInput.value}]);
 
     submitButton.innerText = "Отправка...";
     let request = new Request("/api/mailing/test", {
@@ -260,6 +299,7 @@ function recalculateMessagesCount() {
     const createdToInput = document.getElementById("templateCreatedTo");
     const limitInput = document.getElementById("templateLimit");
     const offsetInput = document.getElementById("templateOffset");
+    const nextPaymentInput = document.getElementById("templateNextPayment");
     let data = {};
     let tariffs_param = "";
 
@@ -287,6 +327,8 @@ function recalculateMessagesCount() {
         data["limit_messages"] = +limitInput.value;
     if (offsetInput.value !== "")
         data["offset_messages"] = +offsetInput.value;
+    if (nextPaymentInput.value !== "")
+        data["next_payment_date"] = nextPaymentInput.value;
 
     fetch("/api/mailing/messages?" + new URLSearchParams(data) + "&" + tariffs_param.replace(/^\&+|\&+$/g, ''))
         .then((resp) => resp.text())

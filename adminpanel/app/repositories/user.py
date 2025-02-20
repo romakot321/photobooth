@@ -1,11 +1,11 @@
 from sqlalchemy_service import BaseService as BaseRepository
 from sqlalchemy_service.base_db.base import Base as BaseTable
 from sqlalchemy_service.base_db.base import get_session
-from sqlalchemy import not_, or_, func, select
+from sqlalchemy import and_, not_, or_, func, select
 import datetime as dt
 import math
 
-from app.db.tables import Generation, User
+from app.db.tables import Generation, Order, User
 
 
 class UserRepository[Table: User, int](BaseRepository):
@@ -35,7 +35,8 @@ class UserRepository[Table: User, int](BaseRepository):
             created_from: dt.datetime | None = None,
             created_to: dt.datetime | None = None,
             limit: int | None = None,
-            offset: int | None = None
+            offset: int | None = None,
+            next_payment_date: dt.date | None = None
     ) -> list[User]:
         query = self._get_list_query(count=10000000)
         if gender is not None:
@@ -60,6 +61,11 @@ class UserRepository[Table: User, int](BaseRepository):
             query = query.limit(limit)
         if offset is not None:
             query = query.limit(18446744073709551615).offset(offset)
+        if next_payment_date is not None:
+            next_payment_date = next_payment_date - dt.timedelta(days=30)
+            start_datetime = dt.datetime(hour=0, minute=0, second=0, day=next_payment_date.day, month=next_payment_date.month, year=next_payment_date.year)
+            end_datetime = dt.datetime(hour=23, minute=59, second=59, day=next_payment_date.day, month=next_payment_date.month, year=next_payment_date.year)
+            query = query.filter(User.orders.any(and_(Order.system_id == 1, Order.paid_at >= start_datetime, Order.paid_at <= end_datetime)))
         query = query.order_by(User.id)
         return list(await self.session.scalars(query))
 
@@ -72,7 +78,8 @@ class UserRepository[Table: User, int](BaseRepository):
             created_from: dt.datetime | None = None,
             created_to: dt.datetime | None = None,
             limit: int | None = None,
-            offset: int | None = None
+            offset: int | None = None,
+            next_payment_date: dt.date | None = None
     ) -> int:
         query = select(func.count("*")).select_from(User)
         if gender is not None:
@@ -99,6 +106,11 @@ class UserRepository[Table: User, int](BaseRepository):
             limit = math.inf
         if offset is None:
             offset = 0
+        if next_payment_date is not None:
+            next_payment_date = next_payment_date - dt.timedelta(days=30)
+            start_datetime = dt.datetime(hour=0, minute=0, second=0, day=next_payment_date.day, month=next_payment_date.month, year=next_payment_date.year)
+            end_datetime = dt.datetime(hour=23, minute=59, second=59, day=next_payment_date.day, month=next_payment_date.month, year=next_payment_date.year)
+            query = query.filter(User.orders.any(and_(Order.system_id == 1, Order.paid_at >= start_datetime, Order.paid_at <= end_datetime)))
         query = query.order_by(User.id)
         print(query, limit)
         result = await self.session.scalar(query)

@@ -31,7 +31,10 @@ class _Sender:
             return None
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text=b.text, callback_data=b.callback_data, url=b.url) for b in buttons]
+                [
+                    InlineKeyboardButton(text=b.text, callback_data=b.callback_data, url=b.url)
+                    for b in buttons
+                ]
             ]
         )
         return keyboard

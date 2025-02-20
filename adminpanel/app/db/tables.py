@@ -51,6 +51,7 @@ class Mailing(BaseMixin, Base):
     created_to: M[dt.datetime | None] = column(nullable=True)
     limit_messages: M[int | None] = column(nullable=True)
     offset_messages: M[int | None] = column(nullable=True)
+    next_payment_date: M[dt.date | None] = column(nullable=True)
     messages_count: M[int]
 
     template: M['MailingTemplate'] = relationship(back_populates='mailings', lazy='selectin')
@@ -99,6 +100,18 @@ class Tariff(Base):
     mailing_templates: M[list['MailingTemplate']] = relationship(secondary="mailing_templates_tariffs", back_populates="tariffs")
 
 
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: M[int] = column(primary_key=True)
+    user_id: M[int] = column(ForeignKey("bot_users.id"))
+    system_id: M[bool]
+    paid_at: M[dt.datetime | None]
+    is_paid: M[bool | None]
+
+    user: M['User'] = relationship(back_populates="orders", lazy="selectin")
+
+
 class User(Base):
     __tablename__ = "bot_users"
 
@@ -110,6 +123,7 @@ class User(Base):
     created_at: M[dt.datetime]
 
     generations: M[list['Generation']] = relationship(back_populates='user', lazy='noload')
+    orders: M[list['Order']] = relationship(back_populates='user', lazy='noload')
 
 
 class Generation(Base):

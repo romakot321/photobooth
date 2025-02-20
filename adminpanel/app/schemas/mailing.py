@@ -45,6 +45,7 @@ class MailingSchema(BaseModel):
     created_to: dt.datetime | None = None
     limit_messages: int | None = None
     offset_messages: int | None = None
+    next_payment_date: dt.date | None = None
 
     @computed_field
     @property
@@ -67,6 +68,13 @@ class MailingSchema(BaseModel):
     @property
     def created_at_display(self) -> str:
         return self.created_at.strftime("%d %B %Y года в %H:%M")
+
+    @computed_field
+    @property
+    def next_payment_display(self) -> str:
+        if self.next_payment_date is None:
+            return ''
+        return self.next_payment_date.strftime("%d %M %Y")
 
     @computed_field
     @property
@@ -98,6 +106,7 @@ class MailingCreateSchema(BaseModel):
     created_to: dt.datetime | None = None
     limit_messages: int | None = None
     offset_messages: int | None = None
+    next_payment_date: dt.date | None = None
 
 
 class MailingUpdateSchema(BaseModel):
@@ -141,6 +150,7 @@ class MailingMessagesCountSchema(BaseModel):
     created_to: dt.datetime | None = None
     limit_messages: int | None = None
     offset_messages: int | None = None
+    next_payment_date: dt.date | None = None
 
 
 class MailingSendedUserIds(BaseModel):

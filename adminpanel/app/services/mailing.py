@@ -59,7 +59,8 @@ class MailingService:
             created_from=schema.created_from,
             created_to=schema.created_to,
             limit=schema.limit_messages,
-            offset=schema.offset_messages
+            offset=schema.offset_messages,
+            next_payment_date=schema.next_payment_date
         )
 
     async def create_and_run(self, schema: MailingCreateSchema) -> MailingSchema:
