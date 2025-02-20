@@ -51,7 +51,8 @@ class MailingService:
             created_to=mailing.created_to,
             limit=mailing.limit_messages,
             offset=mailing.offset_messages,
-            from_user_id=from_user_id
+            from_user_id=from_user_id,
+            next_payment_date=mailing.next_payment_date
         )
         return users
 
