@@ -65,6 +65,8 @@ class _Sender:
                 await self.bot.send_message(chat_id, text, reply_markup=keyboard, parse_mode="HTML")
         except (aiogram.exceptions.TelegramBadRequest, aiogram.exceptions.TelegramForbiddenError) as e:
             pass
+        except aiogram.exceptions.TelegramRetryAfter as e:
+            logger.info("Rate limit exceed")
 
     async def send(self, chat_ids: list[int | str | None], text: str, buttons: list[_Button], image_path: str | None, video_path: str | None):
         while self.is_locked:
@@ -75,7 +77,7 @@ class _Sender:
         for chat_id in chat_ids:
             if chat_id is None:
                 continue
-            await asyncio.sleep(0.06)
+            await asyncio.sleep(0.1)
             await self._send_message(int(chat_id), text, keyboard, image_path, video_path)
         self.is_locked = False
 
