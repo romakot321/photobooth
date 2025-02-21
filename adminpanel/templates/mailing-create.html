@@ -73,7 +73,7 @@
                                     value="{{ tariff.id }}"
                                     id="tariff{{ tariff.id }}"
                                     {{ "checked" if tariff in template.tariffs }}>
-                                <label class="form-check-label" for="tariff{{ tariff.id }}"> {{ tariff.title }} </label>
+                                <label class="form-check-label" for="tariff{{ tariff.id }}"> {{ tariff.title }} {{ '(Стартовый)' if tariff.is_start else '' }}</label>
                             </div>
                             {% endfor %}
                         </div>

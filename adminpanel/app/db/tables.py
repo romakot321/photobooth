@@ -95,6 +95,7 @@ class Tariff(Base):
 
     id: M[int] = column(primary_key=True)
     title: M[str]
+    is_start: M[bool]
 
     mailings: M[list['Mailing']] = relationship(secondary="mailings_tariffs", back_populates="tariffs")
     mailing_templates: M[list['MailingTemplate']] = relationship(secondary="mailing_templates_tariffs", back_populates="tariffs")

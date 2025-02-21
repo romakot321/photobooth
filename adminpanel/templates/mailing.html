@@ -39,13 +39,13 @@
                             {% if mailing.tariffs is none %}
                                 {% for tariff in mailing.template.tariffs %}
                                     <p>
-                                        {{ tariff.title }}
+                                        {{ tariff.title }} {{ '(Стартовый)' if tariff.is_start else '' }}
                                     </p>
                                 {% endfor %}
                             {% else %}
                                 {% for tariff in mailing.tariffs %}
                                     <p>
-                                        {{ tariff.title }}
+                                        {{ tariff.title }} {{ '(Стартовый)' if tariff.is_start else '' }}
                                     </p>
                                 {% endfor %}
                             {% endif %}
