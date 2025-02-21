@@ -6,11 +6,14 @@ import asyncio
 import os
 import re
 import pathlib
+from redis import exceptions
 from dataclasses import dataclass
 
+from app.repositories.user import UserRepository
 from db.tables import Mailing, User
 from app.schemas.mailing import MailingButtonData
 from app.repositories.redis import RedisRepository
+from sqlalchemy_service.base_db.base import async_session
 
 
 @dataclass
@@ -63,7 +66,7 @@ class _Sender:
                 await self.bot.send_video(chat_id=chat_id, caption=text, video=FSInputFile(video_path), reply_markup=keyboard, parse_mode="HTML")
             else:
                 await self.bot.send_message(chat_id, text, reply_markup=keyboard, parse_mode="HTML")
-        except (aiogram.exceptions.TelegramBadRequest, aiogram.exceptions.TelegramForbiddenError) as e:
+        except (aiogram.exceptions.TelegramBadRequest, aiogram.exceptions.TelegramForbiddenError, aiogram.exceptions.TelegramNetworkError) as e:
             pass
         except aiogram.exceptions.TelegramRetryAfter as e:
             logger.info("Rate limit exceed")
@@ -75,6 +78,7 @@ class _Sender:
 
         self.is_locked = True
         for chat_id in chat_ids:
+            await asyncio.sleep(3)
             if chat_id is None:
                 continue
             await asyncio.sleep(0.1)
@@ -85,9 +89,9 @@ class _Sender:
 class _MailingHandler:
     storage_path = pathlib.Path(os.getenv("IMAGE_STORAGE_PATH", "images"))
 
-    def __init__(self, mailing: Mailing, users: list[User], sender: _Sender, db: RedisRepository):
+    def __init__(self, mailing: Mailing, users_count: int, sender: _Sender, db: RedisRepository):
         self.mailing = mailing
-        self.users = users
+        self.users_count = users_count
         self.sender = sender
         self.message_count = 0
         self.sended_chat_ids = []
@@ -105,6 +109,18 @@ class _MailingHandler:
             return None
         return str(self.storage_path / self.mailing.images[0].filename)
 
+    async def _list_users(self, offset: int, count: int = 100000) -> list[User]:
+        async with async_session() as db_session:
+            user_repository = UserRepository(session=db_session)
+            last_user_id = await self.db.get_mailing_last_user_id(self.mailing.id)
+            users = await user_repository.list_from_mailing(
+                self.mailing,
+                from_user_id=last_user_id,
+                offset=offset,
+                count=count
+            )
+        return users
+
     async def set_pause(self, value: bool):
         self._pause = value
         await self.db.set_mailing_status(self.mailing.id, ("pause" if value else "running"))
@@ -114,23 +130,31 @@ class _MailingHandler:
         if not self._pause:
             await self.db.set_mailing_status(self.mailing.id, "running")
 
-        for i in range(0, len(self.users), 3):
-            while self._pause:
-                await asyncio.sleep(1)
-            if self.is_finished:
-                break
-            chat_ids = [u.chat_id for u in self.users[i:i + 3]]
+        for offset in range(0, self.users_count, 100000):
+            users = await self._list_users(offset)
 
-            await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path(), self._get_video_path())
-            await self.db.add_mailing_user_ids(self.mailing.id, *[u.id for u in self.users[i:i + 3]])
+            for i in range(0, len(users), 3):
+                while self._pause:
+                    await asyncio.sleep(1)
+                if self.is_finished:
+                    break
+                chat_ids = [u.chat_id for u in users[i:i + 3]]
 
-            self.sended_chat_ids += chat_ids
-            self.message_count += len(chat_ids)
+                await self.sender.send(chat_ids, text, self.mailing.buttons, self._get_image_path(), self._get_video_path())
+                await self.db.add_mailing_user_ids(self.mailing.id, *[u.id for u in users[i:i + 3]])
+
+                self.sended_chat_ids += chat_ids
+                self.message_count += len(chat_ids)
+
+            try:
+                await self.db.save()
+            except exceptions.ResponseError:
+                pass
 
         await self.db.set_mailing_status(self.mailing.id, "finished")
-        await self.db.save()
         await self.db.close()
         self.is_finished = True
+        logger.debug(f"Mailing {self.mailing.id=} finished")
 
 
 class _TestHandler:
@@ -171,10 +195,10 @@ def create_test_handler(text: str, buttons: list[MailingButtonData], image_filen
     return _TestHandler(text, chat_ids, image_filename, video_filename, buttons, sender)
 
 
-def create_mailing_handler(mailing: Mailing, users: list[User]) -> _MailingHandler:
+def create_mailing_handler(mailing: Mailing, users_count: int) -> _MailingHandler:
     global handlers, sender
     redis_service = RedisRepository()
-    handler = _MailingHandler(mailing, users, sender, redis_service)
+    handler = _MailingHandler(mailing, users_count, sender, redis_service)
     handlers.append(handler)
     return handler
 

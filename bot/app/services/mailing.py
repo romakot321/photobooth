@@ -42,7 +42,7 @@ class MailingService:
         elif mailing.template and mailing.template.tariffs:
             tariff_ids = [t.id for t in mailing.template.tariffs]
 
-        users = await self.user_repository.list(
+        return await self.user_repository.list(
             tariff_ids=tariff_ids,
             god_mode=mailing.god_mode or (mailing.god_mode if mailing.template is None else mailing.template.god_mode),
             without_tariff=mailing.without_tariff or (mailing.without_tariff if mailing.template is None else mailing.template.without_tariff),
@@ -54,7 +54,26 @@ class MailingService:
             from_user_id=from_user_id,
             next_payment_date=mailing.next_payment_date
         )
-        return users
+
+    async def _count_users_for_mailing(self, mailing: Mailing, from_user_id: int | None = None) -> int:
+        tariff_ids = []
+        if mailing.tariffs:
+            tariff_ids = [t.id for t in mailing.tariffs]
+        elif mailing.template and mailing.template.tariffs:
+            tariff_ids = [t.id for t in mailing.template.tariffs]
+
+        return await self.user_repository.count(
+            tariff_ids=tariff_ids,
+            god_mode=mailing.god_mode or (mailing.god_mode if mailing.template is None else mailing.template.god_mode),
+            without_tariff=mailing.without_tariff or (mailing.without_tariff if mailing.template is None else mailing.template.without_tariff),
+            gender=mailing.gender or (None if mailing.template is None else mailing.template.gender),
+            created_from=mailing.created_from,
+            created_to=mailing.created_to,
+            limit=mailing.limit_messages,
+            offset=mailing.offset_messages,
+            from_user_id=from_user_id,
+            next_payment_date=mailing.next_payment_date
+        )
 
     async def handle_start_mailing(
             self,
@@ -63,10 +82,10 @@ class MailingService:
             bot: Bot
     ):
         mailing: Mailing = await self.mailing_repository.get(data.mailing_id)
-        users = await self._get_users_for_mailing(mailing)
-        logger.debug(f"Starting mailing({mailing.id=}) for {len(users)} users")
+        users_count = await self._count_users_for_mailing(mailing)
+        logger.debug(f"Starting mailing({mailing.id=}) for {users_count} users")
 
-        handler = create_mailing_handler(mailing, users)
+        handler = create_mailing_handler(mailing, users_count)
         asyncio.create_task(handler.start())
 
     @classmethod
@@ -82,14 +101,17 @@ class MailingService:
         for mailing_id, status in mailings_statuses.items():
             if status == "finished":
                 continue
+
             mailing = await mailing_repository.get(mailing_id)
             last_user_id = await redis_repository.get_mailing_last_user_id(mailing_id)
-            users = await self._get_users_for_mailing(mailing, from_user_id=last_user_id)
-            handler = create_mailing_handler(mailing, users)
+            users_count = await self._count_users_for_mailing(mailing, last_user_id)
+
+            handler = create_mailing_handler(mailing, users_count)
             if status == "pause":
                 await handler.set_pause(True)
+
             asyncio.create_task(handler.start())
-            logger.debug(f"Restarted mailing({mailing.id=}) for {len(users)} users")
+            logger.debug(f"Restarted mailing({mailing.id=}) for {users_count} users")
 
         try:
             await db_session.close()
