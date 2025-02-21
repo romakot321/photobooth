@@ -1,0 +1,16 @@
+annotated-types==0.7.0
+anyio==4.8.0
+click==8.1.8
+greenlet==3.1.1
+h11==0.14.0
+idna==3.10
+loguru==0.7.3
+psutil==5.9.8
+python-dotenv==1.0.1
+sniffio==1.3.1
+SQLAlchemy==2.0.37
+sqlalchemy-service @ https://github.com/romakot321/sqlalchemy-service/archive/main.zip#sha256=4fcb7c5c74dd51c31df542eb3e9dedf06af19fee2c9300f6125be2ac2a8faaec
+aiohttp==3.11.11
+starlette==0.45.3
+typing_extensions==4.12.2
+aiomysql
