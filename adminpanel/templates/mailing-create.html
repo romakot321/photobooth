@@ -100,8 +100,8 @@
                                 value="1"
                                 id="mailingPaymentButtonCheckbox"
                                 onchange="setCommandInputDisplay(event);">
-                            <label class="form-check-label" for="mailingPaymentButtonCheckbox">Добавить кнопку оплаты</label>
-                            <input id="mailingPaymentCommand" class="form-control" type="text" style="display: none;" value="/offer1390" />
+                            <label class="form-check-label" for="mailingPaymentButtonCheckbox">Добавить кнопку</label>
+                            <input id="mailingPaymentText" class="form-control" type="text" style="display: none;" value="Оплатить" />
                         </div>
                     </div>
                 </l1>
@@ -163,11 +163,16 @@ var videosFilenames = [];
 function setCommandInputDisplay(event) {
     const checkbox = event.target;
     const commandInput = document.getElementById("mailingPaymentCommand");
+    const textInput = document.getElementById("mailingPaymentText");
 
-    if (checkbox.checked)
+    if (checkbox.checked) {
         commandInput.style.display = "block";
-    else
+        textInput.style.display = "block";
+    }
+    else {
         commandInput.style.display = "none";
+        textInput.style.display = "none";
+    }
 }
 
 function setUrlInputDisplay(event) {
@@ -187,6 +192,7 @@ function createMailing(event) {
     const withoutTariffInput = document.getElementById("templateWithoutTariff");
     const textInput = document.getElementById("templateText");
     const mailingPaymentButtonInput = document.getElementById("mailingPaymentButtonCheckbox");
+    const buttonTextInput = document.getElementById("mailingPaymentText");
     const createdFromInput = document.getElementById("templateCreatedFrom");
     const createdToInput = document.getElementById("templateCreatedTo");
     const limitInput = document.getElementById("templateLimit");
@@ -228,7 +234,7 @@ function createMailing(event) {
         offset_messages: offset === 0 ? null : offset
     };
     if (mailingPaymentButtonInput.checked)
-        data["buttons"] = (data.buttons || []).concat([{text: "Оплатить", "callback_data": commandInput.value}]);
+        data["buttons"] = (data.buttons || []).concat([{text: buttonTextInput.value, "callback_data": commandInput.value}]);
     if (mailingUrlButtonInput.checked)
         data["buttons"] = (data.buttons || []).concat([{text: "Перейти", "url": urlInput.value}]);
     console.log(data);
@@ -261,6 +267,7 @@ function testMailing(event) {
     const commandInput = document.getElementById("mailingPaymentCommand");
     const mailingUrlButtonInput = document.getElementById("mailingLinkButtonCheckbox");
     const urlInput = document.getElementById("mailingLinkButtonUrl");
+    const buttonTextInput = document.getElementById("mailingPaymentText");
 
     let text = textInput.value === "" ? "{{ template.text }}" : textInput.value;
     let data = {
@@ -270,7 +277,7 @@ function testMailing(event) {
         video_filename: videosFilenames.length > 0 ? videosFilenames[0] : null
     };
     if (mailingPaymentButtonInput.checked)
-        data["buttons"] = (data.buttons || []).concat([{text: "Оплатить", "callback_data": commandInput.value}]);
+        data["buttons"] = (data.buttons || []).concat([{text: buttonTextInput.value, "callback_data": commandInput.value}]);
     if (mailingUrlButtonInput.checked)
         data["buttons"] = (data.buttons || []).concat([{text: "Перейти", "url": urlInput.value}]);
 

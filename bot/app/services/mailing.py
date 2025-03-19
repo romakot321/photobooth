@@ -17,7 +17,7 @@ from app.repositories.message import set_mailing_pause
 from app.schemas.action import MailingData
 from app.schemas.mailing import MailingTestData
 from db.tables import Mailing, User
-from sqlalchemy_service.base_db.base import get_session
+from sqlalchemy_service.base_db.base import default_service_engine
 
 
 class MailingService:
@@ -90,34 +90,27 @@ class MailingService:
 
     @classmethod
     async def restore_mailings(cls):
-        sessionmaker = get_session()
-        db_session: AsyncSession = await anext(sessionmaker)
-        mailing_repository = MailingRepository(session=db_session)
-        user_repository = UserRepository(session=db_session)
-        redis_repository = RedisRepository()
-        self = cls(mailing_repository=mailing_repository, user_repository=user_repository)
+        async with default_service_engine.async_session() as db_session:
+            mailing_repository = MailingRepository(session=db_session)
+            user_repository = UserRepository(session=db_session)
+            redis_repository = RedisRepository()
+            self = cls(mailing_repository=mailing_repository, user_repository=user_repository)
 
-        mailings_statuses = await redis_repository.list_mailings_statuses()
-        for mailing_id, status in mailings_statuses.items():
-            if status == "finished":
-                continue
+            mailings_statuses = await redis_repository.list_mailings_statuses()
+            for mailing_id, status in mailings_statuses.items():
+                if status == "finished":
+                    continue
 
-            mailing = await mailing_repository.get(mailing_id)
-            last_user_id = await redis_repository.get_mailing_last_user_id(mailing_id)
-            users_count = await self._count_users_for_mailing(mailing, last_user_id)
+                mailing = await mailing_repository.get(mailing_id)
+                last_user_id = await redis_repository.get_mailing_last_user_id(mailing_id)
+                users_count = await self._count_users_for_mailing(mailing, last_user_id)
 
-            handler = create_mailing_handler(mailing, users_count)
-            if status == "pause":
-                await handler.set_pause(True)
+                handler = create_mailing_handler(mailing, users_count)
+                if status == "pause":
+                    await handler.set_pause(True)
 
-            asyncio.create_task(handler.start())
-            logger.debug(f"Restarted mailing({mailing.id=}) for {users_count} users")
-
-        try:
-            await db_session.close()
-            await anext(sessionmaker)
-        except StopAsyncIteration:
-            pass
+                asyncio.create_task(handler.start())
+                logger.debug(f"Restarted mailing({mailing.id=}) for {users_count} users")
 
     @classmethod
     async def get_mailing_messages_sent(cls, mailing_id) -> int:

@@ -1,25 +1,13 @@
 from db.tables import Generation, Mailing, Order, User
-from sqlalchemy_service import BaseService as BaseRepository
-from sqlalchemy_service.base_db.base import Base as BaseTable
-from sqlalchemy_service.base_db.base import get_session
+from app.repositories.base import BaseRepository
+
 from sqlalchemy import and_, func, not_, or_, select
 import datetime as dt
 import math
 
-from typing import TypedDict, Annotated
-from sqlalchemy.ext.asyncio import AsyncSession
-from aiogram3_di import Depends
-
 
 class UserRepository[Table: User, int](BaseRepository):
     base_table = User
-
-    @classmethod
-    def init(
-            cls,
-            session: Annotated[AsyncSession, Depends(get_session)]
-    ):
-        return cls(session=session)
 
     async def _get_list(
         self,

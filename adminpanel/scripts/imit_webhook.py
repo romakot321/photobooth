@@ -60,6 +60,8 @@ def pack_webhook_data(chat_id: int, username: str | None, name: str, gender: str
 
 
 async def send(webhook_data: dict):
+    await asyncio.sleep(0.45)
+    return
     async with aiohttp.ClientSession() as session:
         resp = await session.post(url + json.dumps(webhook_data), headers={"Content-Type": "application/json"})
         assert resp.status == 200, resp.text
@@ -91,16 +93,14 @@ async def send_for_users(command: str, from_user_id: int | None = None, tariff_i
             break
         offset += len(users)
 
-        for user in users:
-            if user.chat_id is None:
-                continue
-            data = pack_webhook_data(user.chat_id, user.login, user.name, user.gender, command)
-            try:
-                await send(data)
-            except Exception as e:
-                logger.info(e)
-            logger.debug(f"Sended for {user.id=} {user.chat_id=} {command=}")
-            await asyncio.sleep(0.1)
+        for i in range(0, len(users), 2):
+            for user in users[i:i + 2]:
+                if user.chat_id is None:
+                    continue
+                data = pack_webhook_data(user.chat_id, user.login, user.name, user.gender, command)
+                asyncio.create_task(send(data))
+                logger.debug(f"Task created for {user.id=} {user.chat_id=} {command=}")
+            await asyncio.sleep(0.05)
 
 
 async def main():
