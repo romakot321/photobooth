@@ -25,9 +25,9 @@ class _Button:
     url: str | None = None
 
 
-async def build_mainmenu_keyboard() -> ReplyKeyboardMarkup:
+async def build_mainmenu_keyboard(telegram_id: str) -> ReplyKeyboardMarkup:
     async with aiohttp.ClientSession() as session:
-        resp = await session.get("https://bot.fotobudka.online/api/mainMenu/313226091")
+        resp = await session.get("https://bot.fotobudka.online/api/mainMenu/" + str(telegram_id))
         assert resp.status == 200
         buttons = (await resp.json())["data"]["keyboard"]
 
@@ -102,7 +102,7 @@ class _Sender:
                     continue
                 async with self.lock:
                     await self._send_message(int(chat_id), text, buttons, image_path, video_path)
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(3)
         except Exception as e:
             logger.exception(e)
 
@@ -142,9 +142,9 @@ class _MailingHandler:
                     count=count
                 )
             except exc.OperationalError:
+                last_user_id = await self.db.get_mailing_last_user_id(self.mailing.id)
                 async with default_service_engine.async_session() as db_session:
                     user_repository = UserRepository(session=db_session)
-                    last_user_id = await self.db.get_mailing_last_user_id(self.mailing.id)
                     users = await user_repository.list_from_mailing(
                         self.mailing,
                         from_user_id=last_user_id,
@@ -162,27 +162,26 @@ class _MailingHandler:
         if not self._pause:
             await self.db.set_mailing_status(self.mailing.id, "running")
         mailing_offset = self.mailing.offset_messages or 0
-        if all(button.text == "mainmenu" for button in self.mailing.buttons):
-            buttons = await build_mainmenu_keyboard()
-        else:
-            buttons = self.mailing.buttons
 
         for offset in range(mailing_offset, self.users_count, 100000):
             users = await self._list_users(offset)
 
-            for i in range(0, len(users), 3):
+            for user in users:
                 while self._pause:
                     await asyncio.sleep(1)
                 if self.is_finished:
                     break
-                chat_ids = [u.chat_id for u in users[i:i + 3]]
-                logger.debug(f"Sending test to {chat_ids}")
+                logger.debug(f"Sending test to {user.chat_id=}")
 
-                await self.sender.send(chat_ids, text, buttons, self._get_image_path(), self._get_video_path())
-                await self.db.add_mailing_user_ids(self.mailing.id, *[u.id for u in users[i:i + 3]])
+                if all(button.text == "mainmenu" for button in self.mailing.buttons):
+                    buttons = await build_mainmenu_keyboard(user.chat_id)
+                else:
+                    buttons = self.mailing.buttons
 
-                self.sended_chat_ids += chat_ids
-                self.message_count += len(chat_ids)
+                await self.sender.send([user.chat_id], text, buttons, self._get_image_path(), self._get_video_path())
+                await self.db.add_mailing_user_ids(self.mailing.id, user.id)
+
+                self.message_count += 1
 
             try:
                 await self.db.save()
@@ -218,13 +217,11 @@ class _TestHandler:
         return str(self.storage_path / self.video_filename)
 
     async def start(self):
-        if all(button.text == "mainmenu" for button in self.buttons):
-            self.buttons = await build_mainmenu_keyboard()
-
-        for i in range(0, len(self.chat_ids), 5):
-            chat_ids = self.chat_ids[i:i + 5]
-            await self.sender.send(chat_ids, self.text, self.buttons, self._get_image_path(), self._get_video_path())
-            self.message_count += len(chat_ids)
+        for chat_id in self.chat_ids:
+            if all(button.text == "mainmenu" for button in self.buttons):
+                self.buttons = await build_mainmenu_keyboard(str(chat_id))
+            await self.sender.send([chat_id], self.text, self.buttons, self._get_image_path(), self._get_video_path())
+            self.message_count += 1
 
 
 sender = _Sender()
